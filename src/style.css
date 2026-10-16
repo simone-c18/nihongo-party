@@ -1,0 +1,99 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f7f6f6;
+  font-family: Arial, sans-serif;
+}
+.card {
+  width: min(90vw, 320px);
+  min-height: 450px;
+  padding: 65px 28px 35px;
+  background: white;
+  text-align: center;
+}
+h1, h2 { color: #ef9fb7; font-size: 23px; font-weight: 400; }
+h2 { font-size: 20px; }
+.mascots { margin: 32px 0; font-size: 38px; }
+p { color: #efa8bb; font-size: 14px; margin: 22px 0; }
+button {
+  display: block;
+  width: 150px;
+  margin: 10px auto;
+  padding: 9px;
+  border: 0;
+  border-radius: 20px;
+  background: #dedede;
+  color: #333;
+  cursor: pointer;
+}
+button:hover { background: #f2c5d2; }
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+.back { background: transparent; text-decoration: underline; }
+
+.room-code-box {
+  background: #ffe5ef;
+  border: 2px solid #f3bfd2;
+  border-radius: 20px;
+  padding: 15px 35px;
+  margin: 20px auto;
+  width: fit-content;
+  text-align: center;
+}
+
+.room-code-box p {
+  color: #b77b97;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin: 5px;
+}
+
+.room-code-box h1 {
+  color: #9f5577;
+  font-size: 36px;
+  letter-spacing: 5px;
+  margin: 5px;
+}
+
+.player-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.player-card {
+  background: #fff0f6;
+  border: 2px solid #f6c9db;
+  border-radius: 16px;
+  padding: 12px;
+  min-width: 100px;
+  text-align: center;
+}
+
+.player-avatar {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.player-card p {
+  color: #a55f80;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.player-card span {
+  color: #bb91a4;
+  font-size: 12px;
+}
