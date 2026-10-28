@@ -1,5 +1,5 @@
 
-.body{
+body{
     
     margin: 0;
     padding: 0;
@@ -135,7 +135,7 @@ img{
     box-shadow: none;
 }
 
-.room_input:focus{
+.code_box:focus{
     border-color: rgba(192, 2, 38, 0.8);
 }
 
@@ -236,4 +236,19 @@ img{
 
 .hidden {
     display: none !important;
+}
+.code_box:focus {
+    outline: none;
+}
+
+.button:disabled,
+.button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+button.button {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
 }
