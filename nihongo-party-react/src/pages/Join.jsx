@@ -1,10 +1,15 @@
+
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { joinRoom } from '../firebase/roomcode.js'
 
 const CODE_LENGTH = 6
 
 export default function Join() {
   const [chars, setChars] = useState(Array(CODE_LENGTH).fill(''))
+  const [nickname, setNickname] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const inputs = useRef([])
   const navigate = useNavigate()
 
@@ -13,13 +18,20 @@ export default function Join() {
 
   const handleChange = (i, e) => {
     const value = e.target.value.slice(-1).toUpperCase()
-    setChars((prev) => prev.map((c, idx) => (idx === i ? value : c)))
-    if (value && i < CODE_LENGTH - 1) inputs.current[i + 1]?.focus()
+    setChars(prev => prev.map((c, idx) => idx === i ? value : c))
+    if (value && i < CODE_LENGTH - 1) {
+      inputs.current[i + 1]?.focus()
+    }
   }
 
   const handleKeyDown = (i, e) => {
-    if (e.key === 'Backspace' && !chars[i] && i > 0) inputs.current[i - 1]?.focus()
-    if (e.key === 'Enter' && isComplete) navigate(`/lobby/${code}`)
+    if (e.key === 'Backspace' && !chars[i] && i > 0) {
+      inputs.current[i - 1]?.focus()
+    }
+
+    if (e.key === 'Enter' && isComplete) {
+      handleJoin()
+    }
   }
 
   const handlePaste = (e) => {
@@ -28,10 +40,33 @@ export default function Join() {
       .replace(/\s/g, '')
       .toUpperCase()
       .slice(0, CODE_LENGTH)
+
     if (!pasted) return
+
     e.preventDefault()
-    setChars(Array.from({ length: CODE_LENGTH }, (_, i) => pasted[i] ?? ''))
-    inputs.current[Math.min(pasted.length, CODE_LENGTH - 1)]?.focus()
+    setChars(Array.from(
+      { length: CODE_LENGTH },
+      (_, i) => pasted[i] ?? ''
+    ))
+  }
+
+  async function handleJoin() {
+    if (!isComplete || loading) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const joinedCode = await joinRoom(code, nickname.trim() || 'Player')
+      navigate(`/lobby/${joinedCode}`, {
+        state: { isHost: false }
+      })
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Could not join room.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -42,27 +77,42 @@ export default function Join() {
         {chars.map((c, i) => (
           <input
             key={i}
-            ref={(el) => (inputs.current[i] = el)}
+            ref={el => inputs.current[i] = el}
             type="text"
             className="code_box"
             maxLength={1}
             value={c}
-            onChange={(e) => handleChange(i, e)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
+            onChange={e => handleChange(i, e)}
+            onKeyDown={e => handleKeyDown(i, e)}
             aria-label={`Room code character ${i + 1}`}
           />
         ))}
       </div>
 
+      <input
+        type="text"
+        placeholder="your nickname"
+        maxLength={20}
+        value={nickname}
+        onChange={e => setNickname(e.target.value)}
+        aria-label="Your nickname"
+      />
+
+      {error && <p role="alert">{error}</p>}
+
       <div className="button_group">
-        <Link
-          to={`/lobby/${code}`}
-          className={`button${isComplete ? '' : ' disabled'}`}
-          aria-disabled={!isComplete}
+        <button
+          type="button"
+          className="button"
+          disabled={!isComplete || loading}
+          onClick={handleJoin}
         >
-          continue
+          {loading ? 'joining...' : 'continue'}
+        </button>
+
+        <Link to="/" className="button secondary_button">
+          back
         </Link>
-        <Link to="/" className="button secondary_button">back</Link>
       </div>
     </main>
   )

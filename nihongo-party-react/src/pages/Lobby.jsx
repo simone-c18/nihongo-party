@@ -1,17 +1,56 @@
-import { Link, useParams } from 'react-router-dom'
+
+import { useEffect, useState } from 'react'
+import { Link, useParams, useLocation } from 'react-router-dom'
+import { listenToRoom } from '../firebase/roomcode.js'
 
 const MAX_PLAYERS = 4
 const AVATARS = ['🐻', '🐰', '🐱', '🦊']
 
-// TODO: replace with the real room code + player list from Firebase RTDB.
-const PLACEHOLDER_CODE = 'T8ZGCT'
-const PLACEHOLDER_PLAYERS = 1
-
 export default function Lobby() {
   const { code } = useParams()
-  const roomCode = code ?? PLACEHOLDER_CODE
-  const playerCount = PLACEHOLDER_PLAYERS
-  const canBegin = playerCount > 1
+  const location = useLocation()
+
+  const [room, setRoom] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  const isHost = location.state?.isHost === true
+
+  useEffect(() => {
+    if (!code) {
+      setError('No room code provided.')
+      setLoading(false)
+      return
+    }
+
+    const unsubscribe = listenToRoom(
+      code,
+      (roomData) => {
+        setRoom(roomData)
+        setLoading(false)
+
+        if (!roomData) {
+          setError('Room not found.')
+        } else {
+          setError('')
+        }
+      }
+    )
+
+    return () => unsubscribe()
+  }, [code])
+
+  const players = Object.entries(room?.players || {})
+  const playerCount = players.length
+  const canBegin = isHost && playerCount > 1
+
+  if (loading) {
+    return <main className="container">loading lobby...</main>
+  }
+
+  if (error) {
+    return <main className="container">{error}</main>
+  }
 
   return (
     <main className="container">
@@ -20,7 +59,7 @@ export default function Lobby() {
 
       <div className="code_card">
         <span className="code_label">ROOM CODE</span>
-        <span className="code">{roomCode}</span>
+        <span className="code">{code}</span>
       </div>
 
       <div className="player_count">
@@ -28,25 +67,36 @@ export default function Lobby() {
       </div>
 
       <div className="avatar_grid">
-        {AVATARS.map((avatar, i) => (
-          <div
-            key={avatar}
-            className={`avatar_slot ${i < playerCount ? 'joined' : 'empty'}`}
-          >
-            {avatar}
-          </div>
-        ))}
+        {AVATARS.map((avatar, i) => {
+          const player = players[i]?.[1]
+
+          return (
+            <div
+              key={i}
+              className={`avatar_slot ${player ? 'joined' : 'empty'}`}
+              title={player?.nickname || 'Empty slot'}
+            >
+              {avatar}
+            </div>
+          )
+        })}
       </div>
 
       <div className="lobby_begin">
         {canBegin ? (
-          <Link to="/game" className="button">BEGIN GAME</Link>
+          <button type="button" className="button" disabled>
+            BEGIN GAME (coming soon)
+          </button>
         ) : (
-          <p className="waiting_text">waiting for friends... ♡</p>
+          <p className="waiting_text">
+            waiting for friends... ♡
+          </p>
         )}
       </div>
 
-      <Link to="/join" className="button secondary_button">back</Link>
+      <Link to="/" className="button secondary_button">
+        back
+      </Link>
     </main>
   )
 }
