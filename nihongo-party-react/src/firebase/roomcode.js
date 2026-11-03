@@ -1,46 +1,46 @@
 
 import { signInAnonymously } from "firebase/auth";
-import { ref, runTransaction, get, onValue } from "firebase/database";
+import {
+  ref,
+  runTransaction,
+  get,
+  onValue
+} from "firebase/database";
 import { auth, database } from "./firebase.js";
 
-// Give each player a unique Firebase ID.
+const CHARACTERS = ["bear", "bunny", "cat", "fox"];
+
 export async function getCurrentPlayer() {
-  if (auth.currentUser) {
-    return auth.currentUser;
-  }
+  if (auth.currentUser) return auth.currentUser;
 
   const result = await signInAnonymously(auth);
   return result.user;
 }
 
-// Generate a random 6-character room code.
 function generateRoomCode() {
   const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
 
   for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    code += characters[randomIndex];
+    code += characters[
+      Math.floor(Math.random() * characters.length)
+    ];
   }
 
   return code;
 }
 
-// Create a new room in Firebase.
 export async function createRoom() {
   const user = await getCurrentPlayer();
 
   for (let attempt = 0; attempt < 10; attempt++) {
-    const roomCode = generateRoomCode();
-    const roomRef = ref(database, `rooms/${roomCode}`);
+    const code = generateRoomCode();
+    const roomRef = ref(database, `rooms/${code}`);
 
     const result = await runTransaction(
       roomRef,
-      (existingRoom) => {
-        // Don't overwrite an existing room.
-        if (existingRoom !== null) {
-          return;
-        }
+      (room) => {
+        if (room !== null) return;
 
         return {
           hostId: user.uid,
@@ -49,7 +49,6 @@ export async function createRoom() {
           players: {
             [user.uid]: {
               nickname: "Host",
-              avatar: "bear",
               ready: false
             }
           }
@@ -58,31 +57,27 @@ export async function createRoom() {
       { applyLocally: false }
     );
 
-    if (result.committed) {
-      return roomCode;
-    }
+    if (result.committed) return code;
   }
 
-  throw new Error("Couldn't create a room. Please try again.");
+  throw new Error("Could not create a room.");
 }
 
-// Find an existing room using its code.
 export async function findRoom(roomCode) {
   const code = roomCode.trim().toUpperCase();
 
-  // Check that the room code is valid.
   if (!/^[A-Z0-9]{6}$/.test(code)) {
-    throw new Error("Please enter a valid 6-character room code.");
+    throw new Error("Enter a valid 6-character code.");
   }
 
-  // Sign in before reading Firebase.
   await getCurrentPlayer();
 
-  const roomRef = ref(database, `rooms/${code}`);
-  const snapshot = await get(roomRef);
+  const snapshot = await get(
+    ref(database, `rooms/${code}`)
+  );
 
   if (!snapshot.exists()) {
-    throw new Error("Room not found! Check your code.");
+    throw new Error("Room not found!");
   }
 
   const room = snapshot.val();
@@ -96,51 +91,118 @@ export async function findRoom(roomCode) {
 
 export async function joinRoom(roomCode, nickname = "Player") {
   const code = roomCode.trim().toUpperCase();
-
-  // Check if the room exists.
   const room = await findRoom(code);
+  const user = await getCurrentPlayer();
 
-  // Only allow up to 4 players.
+  if (room.players?.[user.uid]) {
+    return code;
+  }
+
   if (Object.keys(room.players || {}).length >= 4) {
     throw new Error("This room is full!");
   }
-
-  // Get the current player's Firebase ID.
-  const user = await getCurrentPlayer();
 
   const playerRef = ref(
     database,
     `rooms/${code}/players/${user.uid}`
   );
 
-  // Add this player without overwriting anyone else.
-  const result = await runTransaction(playerRef, (existingPlayer) => {
-    if (existingPlayer !== null) {
-      return;
-    }
+  const result = await runTransaction(
+    playerRef,
+    (existingPlayer) => {
+      if (existingPlayer !== null) return;
 
-    return {
-      nickname: nickname.trim() || "Player",
-      avatar: "bunny",
-      ready: false
-    };
-  }, { applyLocally: false });
+      return {
+        nickname: nickname.trim().slice(0, 20) || "Player",
+        ready: false
+      };
+    },
+    { applyLocally: false }
+  );
 
   if (!result.committed) {
-    throw new Error("You are already in this room!");
+    throw new Error("Could not join the room.");
   }
 
   return code;
 }
 
-// Listen for changes to a room in real time.
+export async function claimCharacter(roomCode, character) {
+  const code = roomCode.trim().toUpperCase();
+
+  if (!CHARACTERS.includes(character)) {
+    throw new Error("Invalid character.");
+  }
+
+  const user = await getCurrentPlayer();
+  const room = await findRoom(code);
+
+  if (!room.players?.[user.uid]) {
+    throw new Error("You must join the room first.");
+  }
+
+  const claimsRef = ref(
+    database,
+    `rooms/${code}/characterClaims`
+  );
+
+  const snapshot = await get(claimsRef);
+  const claims = snapshot.val() || {};
+
+  const currentCharacter = CHARACTERS.find(
+    (name) => claims[name] === user.uid
+  );
+
+  if (currentCharacter === character) {
+    return character;
+  }
+
+  // Release the previous character before switching.
+  if (currentCharacter) {
+    const oldRef = ref(
+      database,
+      `rooms/${code}/characterClaims/${currentCharacter}`
+    );
+
+    const released = await runTransaction(
+      oldRef,
+      (owner) => {
+        if (owner !== user.uid) return;
+        return null;
+      },
+      { applyLocally: false }
+    );
+
+    if (!released.committed) {
+      throw new Error("Could not switch characters.");
+    }
+  }
+
+  const characterRef = ref(
+    database,
+    `rooms/${code}/characterClaims/${character}`
+  );
+
+  const result = await runTransaction(
+    characterRef,
+    (owner) => {
+      if (owner === null) return user.uid;
+      return;
+    },
+    { applyLocally: false }
+  );
+
+  if (!result.committed) {
+    throw new Error("That character is already taken!");
+  }
+
+  return character;
+}
+
 export function listenToRoom(roomCode, onUpdate) {
   const roomRef = ref(database, `rooms/${roomCode}`);
 
-  // Firebase calls onUpdate whenever room data changes.
-  const unsubscribe = onValue(roomRef, (snapshot) => {
+  return onValue(roomRef, (snapshot) => {
     onUpdate(snapshot.val());
   });
-
-  return unsubscribe;
 }

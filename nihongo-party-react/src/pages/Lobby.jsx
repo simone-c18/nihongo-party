@@ -1,20 +1,26 @@
 
 import { useEffect, useState } from 'react'
-import { Link, useParams, useLocation } from 'react-router-dom'
-import { listenToRoom } from '../firebase/roomcode.js'
+import { Link, useParams } from 'react-router-dom'
+import { listenToRoom, claimCharacter } from '../firebase/roomcode.js'
+import { auth } from '../firebase/firebase.js'
 
 const MAX_PLAYERS = 4
-const AVATARS = ['🐻', '🐰', '🐱', '🦊']
+
+const AVATARS = [
+  { id: 'bear', emoji: '🐻', name: 'Bear' },
+  { id: 'bunny', emoji: '🐰', name: 'Bunny' },
+  { id: 'cat', emoji: '🐱', name: 'Cat' },
+  { id: 'fox', emoji: '🦊', name: 'Fox' }
+]
 
 export default function Lobby() {
   const { code } = useParams()
-  const location = useLocation()
 
   const [room, setRoom] = useState(null)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-
-  const isHost = location.state?.isHost === true
+  const [error, setError] = useState('')
+  const [claimError, setClaimError] = useState('')
+  const [claiming, setClaiming] = useState(false)
 
   useEffect(() => {
     if (!code) {
@@ -23,33 +29,61 @@ export default function Lobby() {
       return
     }
 
-    const unsubscribe = listenToRoom(
-      code,
-      (roomData) => {
-        setRoom(roomData)
-        setLoading(false)
-
-        if (!roomData) {
-          setError('Room not found.')
-        } else {
-          setError('')
-        }
-      }
-    )
+    const unsubscribe = listenToRoom(code, (data) => {
+      setRoom(data)
+      setLoading(false)
+      setError(data ? '' : 'Room not found.')
+    })
 
     return () => unsubscribe()
   }, [code])
 
   const players = Object.entries(room?.players || {})
+  const claims = room?.characterClaims || {}
   const playerCount = players.length
+  const currentUserId = auth.currentUser?.uid
+
+  const isHost = Boolean(
+    currentUserId && room?.hostId === currentUserId
+  )
+
+  const myCharacter = AVATARS.find(
+    (avatar) => claims[avatar.id] === currentUserId
+  )
+
   const canBegin = isHost && playerCount > 1
+
+  async function handleCharacterClick(character) {
+    if (claiming || !currentUserId) return
+
+    setClaiming(true)
+    setClaimError('')
+
+    try {
+      await claimCharacter(code, character)
+    } catch (err) {
+      console.error(err)
+      setClaimError(
+        err.message || 'Could not select character.'
+      )
+    } finally {
+      setClaiming(false)
+    }
+  }
 
   if (loading) {
     return <main className="container">loading lobby...</main>
   }
 
   if (error) {
-    return <main className="container">{error}</main>
+    return (
+      <main className="container">
+        <p role="alert">{error}</p>
+        <Link to="/" className="button secondary_button">
+          back
+        </Link>
+      </main>
+    )
   }
 
   return (
@@ -66,21 +100,56 @@ export default function Lobby() {
         <span>🐻 {playerCount} / {MAX_PLAYERS} players</span>
       </div>
 
+      <h3>choose your character!</h3>
+
       <div className="avatar_grid">
-        {AVATARS.map((avatar, i) => {
-          const player = players[i]?.[1]
+        {AVATARS.map((avatar) => {
+          const ownerId = claims[avatar.id]
+          const isMine = Boolean(
+            currentUserId && ownerId === currentUserId
+          )
+          const isTaken = Boolean(ownerId) && !isMine
 
           return (
-            <div
-              key={i}
-              className={`avatar_slot ${player ? 'joined' : 'empty'}`}
-              title={player?.nickname || 'Empty slot'}
+            <button
+              key={avatar.id}
+              type="button"
+              className={`avatar_slot ${
+                ownerId ? 'joined' : 'empty'
+              }`}
+              disabled={isTaken || claiming || !currentUserId}
+              onClick={() => handleCharacterClick(avatar.id)}
+              aria-pressed={isMine}
+              title={
+                isMine
+                  ? 'Your character'
+                  : isTaken
+                    ? 'Already claimed'
+                    : 'Select character'
+              }
             >
-              {avatar}
-            </div>
+              <span>{avatar.emoji}</span>
+              <span style={{ fontSize: '12px' }}>
+                {isMine
+                  ? 'yours ♡'
+                  : isTaken
+                    ? 'taken'
+                    : avatar.name}
+              </span>
+            </button>
           )
         })}
       </div>
+
+      {myCharacter && (
+        <p className="waiting_text">
+          you selected {myCharacter.name}! ♡
+        </p>
+      )}
+
+      {claimError && (
+        <p role="alert">{claimError}</p>
+      )}
 
       <div className="lobby_begin">
         {canBegin ? (
