@@ -15,7 +15,7 @@ const AVATARS = [
     { id: "Cinnamaroll", src: Cinnamaroll, alt: "Cinnamaroll"},
 ]
 
-export default function Profile({ mode }){
+export default function Profile({ mode, hostAvatar}){
     const [nickname, setNickname] = useState("")
     const [selectedAvatar, setSelectedAvatar] = useState(null)
 
@@ -62,17 +62,29 @@ export default function Profile({ mode }){
             <div>
                 <h3>your avatar: </h3>
                 <div className = "avatar_selection_grid">
-                    {AVATARS.map((avatar) => (
-                        <button
-                            key = {avatar.id}
-                            type = "button"
-                            className={`avatar_option ${selectedAvatar === avatar.id ? 'selected' : ''}`}
-                            onClick={() => setSelectedAvatar(avatar.id)}
-                            aria-label={`Select ${avatar.alt} avatar`}
-                        >
-                            <img src={avatar.src} alt = {avatar.alt} />
-                        </button>
-                    ))}
+                    {AVATARS.map((avatar) => {
+                        const isHostChoice = mode === 'join' && hostAvatar === avatar.id
+                    
+                        return (
+                            <button
+                                key = {avatar.id}
+                                type = "button"
+                                className={`avatar_option ${selectedAvatar === avatar.id ? 'selected' : ''} ${isHostChoice ? 'disables_avatar' : ''}`}
+                                onClick={() => {
+                                    if (!isHostChoice) setSelectedAvatar(avatar.id)
+                                }}
+                                style={{
+                                    opacity: isHostChoice ? 0.3 : 1,
+                                    cursor: isHostChoice ? 'not-allowed' : 'pointer',
+                                    filter: isHostChoice ? 'grayscale(100%)' : 'none'
+                                }}
+                                disabled={isHostChoice}
+                                aria-label={`Select ${avatar.alt} avatar`}
+                            >
+                                <img src={avatar.src} alt = {avatar.alt} />
+                            </button>
+                        )
+                    })}
                 </div>
             </div>
 
