@@ -1,15 +1,17 @@
 
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { joinRoom } from '../firebase/roomcode.js'
+import { findRoom } from '../firebase/roomcode.js'
 
 const CODE_LENGTH = 6
 
 export default function Join() {
-  const [chars, setChars] = useState(Array(CODE_LENGTH).fill(''))
-  const [nickname, setNickname] = useState('')
+  const [chars, setChars] = useState(
+    Array(CODE_LENGTH).fill('')
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
   const inputs = useRef([])
   const navigate = useNavigate()
 
@@ -17,20 +19,30 @@ export default function Join() {
   const isComplete = code.length === CODE_LENGTH
 
   const handleChange = (i, e) => {
-    const value = e.target.value.slice(-1).toUpperCase()
-    setChars(prev => prev.map((c, idx) => idx === i ? value : c))
+    const value = e.target.value
+      .slice(-1)
+      .toUpperCase()
+
+    setChars((prev) =>
+      prev.map((c, idx) => (idx === i ? value : c))
+    )
+
     if (value && i < CODE_LENGTH - 1) {
       inputs.current[i + 1]?.focus()
     }
   }
 
   const handleKeyDown = (i, e) => {
-    if (e.key === 'Backspace' && !chars[i] && i > 0) {
+    if (
+      e.key === 'Backspace' &&
+      !chars[i] &&
+      i > 0
+    ) {
       inputs.current[i - 1]?.focus()
     }
 
     if (e.key === 'Enter' && isComplete) {
-      handleJoin()
+      handleContinue()
     }
   }
 
@@ -44,26 +56,30 @@ export default function Join() {
     if (!pasted) return
 
     e.preventDefault()
-    setChars(Array.from(
-      { length: CODE_LENGTH },
-      (_, i) => pasted[i] ?? ''
-    ))
+
+    setChars(
+      Array.from(
+        { length: CODE_LENGTH },
+        (_, i) => pasted[i] ?? ''
+      )
+    )
   }
 
-  async function handleJoin() {
+  const handleContinue = async () => {
     if (!isComplete || loading) return
 
     setLoading(true)
     setError('')
 
     try {
-      const joinedCode = await joinRoom(code, nickname.trim() || 'Player')
-      navigate(`/lobby/${joinedCode}`, {
-        state: { isHost: false }
-      })
+      await findRoom(code)
+
+      navigate(`/join/profile/${code}`)
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Could not join room.')
+      setError(
+        err.message || 'Could not find that room.'
+      )
     } finally {
       setLoading(false)
     }
@@ -71,32 +87,30 @@ export default function Join() {
 
   return (
     <main className="container">
-      <h2>enter room <br />code below:</h2>
+      <h1>join room</h1>
 
-      <div className="form" onPaste={handlePaste}>
+      <p>enter your room code</p>
+
+      <div
+        className="code_input_group"
+        onPaste={handlePaste}
+      >
         {chars.map((c, i) => (
           <input
             key={i}
-            ref={el => inputs.current[i] = el}
+            ref={(el) => {
+              inputs.current[i] = el
+            }}
             type="text"
             className="code_box"
             maxLength={1}
             value={c}
-            onChange={e => handleChange(i, e)}
-            onKeyDown={e => handleKeyDown(i, e)}
+            onChange={(e) => handleChange(i, e)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
             aria-label={`Room code character ${i + 1}`}
           />
         ))}
       </div>
-
-      <input
-        type="text"
-        placeholder="your nickname"
-        maxLength={20}
-        value={nickname}
-        onChange={e => setNickname(e.target.value)}
-        aria-label="Your nickname"
-      />
 
       {error && <p role="alert">{error}</p>}
 
@@ -105,12 +119,15 @@ export default function Join() {
           type="button"
           className="button"
           disabled={!isComplete || loading}
-          onClick={handleJoin}
+          onClick={handleContinue}
         >
-          {loading ? 'joining...' : 'continue'}
+          {loading ? 'checking...' : 'continue'}
         </button>
 
-        <Link to="/" className="button secondary_button">
+        <Link
+          to="/"
+          className="button secondary_button"
+        >
           back
         </Link>
       </div>

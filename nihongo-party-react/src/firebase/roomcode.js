@@ -15,7 +15,7 @@ function generateRoomCode() {
   return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
 }
 
-export async function createRoom() {
+export async function createRoom(nickname = 'Host') {
   const user = await getCurrentPlayer();
 
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -31,7 +31,7 @@ export async function createRoom() {
       createdAt: Date.now(),
       players: {
         [user.uid]: {
-          nickname: 'Host',
+          nickname: String(nickname).trim().slice(0, 20) || 'Host',
           ready: false
         }
       }
