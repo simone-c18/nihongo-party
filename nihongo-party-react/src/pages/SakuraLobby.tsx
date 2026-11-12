@@ -354,6 +354,15 @@ export default function SakuraLobby() {
   const myAnswer = question ? answers[uid]?.[question.id] : undefined
   const answerCount = question ? players.filter(p => answers[p.id]?.[question.id] !== undefined).length : 0
   const allAnswered = players.length > 0 && answerCount === players.length
+  // Scores are derived from shared Firebase answers, so every player sees the same result.
+  // 100 points per correct answer; no extra database writes or rule changes required.
+  const scores = players.map(player => {
+    const correctCount = ordered.filter(q => answers[player.id]?.[q.id] === q.answer).length
+    return { ...player, correctCount, score: correctCount * 100 }
+  }).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+  const myScore = scores.find(player => player.id === uid)?.score ?? 0
+  const gameFinished = room?.status === "playing" &&
+    ordered.length === 5 && round === ordered.length - 1 && allAnswered
 
   useEffect(() => {
     if (!code) { setError("Missing room code"); setLoading(false); return }
@@ -409,18 +418,56 @@ export default function SakuraLobby() {
   if (loading) return <main className="app-shell integration-wait">Loading your Sakura Square room…</main>
   if (error || !room) return <main className="app-shell integration-wait"><p className="integration-error">{error || "Room not found"}</p><Link to="/">Back home</Link></main>
   if (!room.players?.[uid]) return <main className="app-shell integration-wait">You're not a member of this room. <Link to="/join">Join room</Link></main>
+  if (gameFinished) {
+    return (
+      <main className="app-shell minigame-shell">
+        <header className="topbar">
+          <div className="brand"><span className="brand-mark"><Icon name="leaf" size={23}/></span><span className="brand-name">Nihongo Party</span></div>
+          <div className="round-progress"><span>MINIGAME 1 COMPLETE</span><strong>5 / 5</strong></div>
+          <div className="score-chip">Your score: {myScore} pts</div>
+        </header>
+        <section className="minigame-stage">
+          <div className="question-card" style={{maxWidth: 700, margin: "40px auto", textAlign: "center"}}>
+            <span className="question-kicker">SAKURA RESULTS</span>
+            <h1>🌸 Final Leaderboard 🌸</h1>
+            <p>Great job, everyone! Here are the final scores.</p>
+            <div style={{display: "grid", gap: 12, marginTop: 28, textAlign: "left"}}>
+              {scores.map((player, index) => (
+                <div key={player.id} style={{
+                  display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+                  background: player.id === uid ? "#ffe4ef" : "#fff7fa",
+                  border: player.id === uid ? "2px solid #ef91b4" : "1px solid #f3d8e3",
+                  borderRadius: 16
+                }}>
+                  <strong style={{minWidth: 40, fontSize: 24}}>{index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}</strong>
+                  <Avatar player={player}/>
+                  <div style={{flex: 1, minWidth: 0}}>
+                    <strong>{player.name}{player.id === uid ? " (You)" : ""}</strong>
+                    <div style={{fontSize: 13, opacity: 0.75}}>{player.correctCount} / 5 correct</div>
+                  </div>
+                  <strong style={{whiteSpace: "nowrap"}}>{player.score} pts</strong>
+                </div>
+              ))}
+            </div>
+            <p style={{marginTop: 24}}>100 points per correct answer · Maximum 500 points</p>
+            <Link to="/" className="button" style={{display: "inline-block", marginTop: 12}}>Back to home</Link>
+          </div>
+        </section>
+      </main>
+    )
+  }
   if (room.status === "playing") {
     if (!question) return <main className="app-shell integration-wait">Loading Minigame 1 questions… {questionError}</main>
     const correct = question.answer
     const completed = myAnswer !== undefined
     return (
       <main className="app-shell minigame-shell">
-        <header className="topbar"><div className="brand"><span className="brand-mark"><Icon name="leaf" size={23}/></span><span className="brand-name">Nihongo Party</span></div><div className="round-progress"><span>MINIGAME 1 · ENGLISH → JAPANESE</span><strong>{round+1} / {ordered.length}</strong></div><div className="score-chip">{players.length} players connected</div></header>
+        <header className="topbar"><div className="brand"><span className="brand-mark"><Icon name="leaf" size={23}/></span><span className="brand-name">Nihongo Party</span></div><div className="round-progress"><span>MINIGAME 1 · ENGLISH → JAPANESE</span><strong>{round+1} / {ordered.length}</strong></div><div className="score-chip">Your score: {myScore} pts · {players.length} players</div></header>
         <section className="minigame-stage"><div className="sakura-confetti sakura-confetti-left"/><div className="sakura-confetti sakura-confetti-right"/><div className="question-card"><span className="question-kicker">TRANSLATE TO JAPANESE</span><div className="question-number">Question {round+1}</div><h1>{question.english}</h1><p>Choose the Japanese word that matches.</p>
           <div className="answer-grid">{question.options.map((a:string,i:number)=><button key={a} disabled={completed} className={`answer-button ${myAnswer === a ? "is-selected" : ""} ${completed && a === correct ? "is-correct" : ""} ${completed && myAnswer === a && a !== correct ? "is-wrong" : ""}`} onClick={()=>handleAnswer(a)}><span>{String.fromCharCode(65+i)}</span>{a}</button>)}</div>
           <div className="minigame-footer"><div className="answer-status">{completed ? (myAnswer === correct ? "Correct! 🌸" : `The correct answer is ${correct}.`) : "Choose an answer to submit."} · {answerCount}/{players.length} answered</div></div>
-          {isHost && <div className="round-actions"><button disabled={!allAnswered || round >= ordered.length-1} onClick={handleNext}>Next question →</button>{round >= ordered.length-1 && <span>Round complete! ♡</span>}</div>}
-        </div><div className="minigame-party">{players.map(p=><div key={p.id}><Avatar player={p}/><span>{p.name}</span></div>)}</div></section>
+          {isHost && <div className="round-actions"><button disabled={!allAnswered || round >= ordered.length-1} onClick={handleNext}>Next question →</button>{round >= ordered.length-1 && <span>Waiting for everyone to finish… ♡</span>}</div>}
+        </div><div className="minigame-party">{players.map(p=><div key={p.id}><Avatar player={p}/><span>{p.name} · {scores.find(s => s.id === p.id)?.score ?? 0} pts</span></div>)}</div></section>
         {toast && <div className="toast">{toast}</div>}
       </main>
     )
