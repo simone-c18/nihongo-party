@@ -492,7 +492,7 @@ h1 {
 .tree {
   position: absolute;
   z-index: 15;
-  top: -9%;
+  top: 5%;
   width: 180px;
   height: 250px;
   transform-origin: bottom;
@@ -2042,3 +2042,13 @@ h1 {
 
 /* Integration-specific UI feedback */
 .integration-error{color:#a12b42;font-weight:800;margin:12px 0}.integration-wait{padding:60px;text-align:center}.answer-button:disabled{cursor:default;opacity:.75}.answer-button.is-correct{outline:3px solid #4e9b72}.answer-button.is-wrong{outline:3px solid #e1879b}.start-button:disabled{opacity:.55;cursor:not-allowed}.lobby-back{color:var(--green-dark);text-decoration:none;font-weight:800}.round-actions{display:flex;gap:12px;justify-content:flex-end;align-items:center;margin-top:16px}.round-actions button{border:0;border-radius:12px;background:var(--green);color:white;padding:12px 20px;font-weight:800;cursor:pointer}.round-actions button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Lobby branding cleanup: keep the school sign readable and the header balanced. */
+.school-sign {
+  font-size: clamp(7px, 0.85vw, 11px);
+  letter-spacing: 0.35px;
+  padding: 5px 7px;
+  max-width: 96%;
+  text-align: center;
+}
+.top-actions { min-width: auto; }

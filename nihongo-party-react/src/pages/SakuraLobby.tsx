@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { auth } from "../firebase/firebase.js"
-import { getCurrentPlayer, listenToRoom, claimCharacter, setPlayerPosition, startGame, submitAnswer, advanceRound } from "../firebase/roomcode.js"
+import { getCurrentPlayer, listenToRoom, claimCharacter, setPlayerPosition, startGame, submitAnswer, advanceRound, selectMinigame, returnToGameMenu } from "../firebase/roomcode.js"
 import { getQuestions } from "../firebase/questions.js"
 import { prepareMinigame1 } from "../firebase/minigame1.js"
+import SentenceScramble, { SCRAMBLE_PUZZLES } from "./SentenceScramble.jsx"
+import ConversationCafe, { CAFE_SCENES } from "./ConversationCafe.jsx"
 import "../styles/sakuraSquare.css"
+import "../styles/nihongo-themes.css"
+import "../styles/nihongo-polish-v2.css"
 
 type IconName = "book" | "check" | "copy" | "gear" | "invite" | "leaf" | "lock" | "sound" | "users"
 
@@ -189,7 +193,7 @@ function Plaza({ players, currentId }: { players: Player[]; currentId: string })
             <i />
             <i />
           </span>
-          <span className="school-sign">SPROUT ACADEMY</span>
+          <span className="school-sign">NIHONGO PARTY ACADEMY</span>
           <span className="school-foundation" />
         </div>
       </div>
@@ -333,9 +337,12 @@ export default function SakuraLobby() {
   const [questions, setQuestions] = useState<any[]>([])
   const [questionError, setQuestionError] = useState("")
   const [copied, setCopied] = useState(false)
-  const [soundOn, setSoundOn] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [toast, setToast] = useState("")
+  const [scrambleBusy, setScrambleBusy] = useState(false)
+  const [selectedMinigame, setSelectedMinigame] = useState("vocab")
+  const [cafeBusy, setCafeBusy] = useState(false)
+  const [launching, setLaunching] = useState(false)
   const lastMove = useRef(0)
   const roomRef = useRef<any>(null)
   roomRef.current = room
@@ -348,6 +355,22 @@ export default function SakuraLobby() {
   })
   const myCharacter = players.find(p => p.id === uid)?.characterId
   const round = room?.game?.currentIndex ?? 0
+  const scrambleIndex = round - 5
+  const scramblePuzzle = SCRAMBLE_PUZZLES[scrambleIndex]
+  const scrambleAnswers = room?.answers || {}
+  const scrambleMyAnswer = scramblePuzzle ? scrambleAnswers[uid]?.[scramblePuzzle.id] : undefined
+  const scrambleAnswerCount = scramblePuzzle ? players.filter(p => scrambleAnswers[p.id]?.[scramblePuzzle.id] !== undefined).length : 0
+  const scrambleAllAnswered = players.length > 0 && scrambleAnswerCount === players.length
+  const scrambleScores = players.map(p => ({...p, correctCount: SCRAMBLE_PUZZLES.filter(q => scrambleAnswers[p.id]?.[q.id] === q.answer.join("|")).length})).map(p => ({...p, score: p.correctCount * 100})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))
+  const cafeIndex = round - 10
+  const cafeScene = CAFE_SCENES[cafeIndex]
+  const cafeAnswers = room?.answers || {}
+  const cafeMyAnswer = cafeScene ? cafeAnswers[uid]?.[cafeScene.id] : undefined
+  const cafeAnswerCount = cafeScene ? players.filter(p => cafeAnswers[p.id]?.[cafeScene.id] !== undefined).length : 0
+  const cafeAllAnswered = players.length > 0 && cafeAnswerCount === players.length
+  const cafeScores = players.map(p => ({...p, correctCount: CAFE_SCENES.filter(s => cafeAnswers[p.id]?.[s.id] === s.options.find(o => o.correct)?.text).length})).map(p => ({...p, score:p.correctCount*100}))
+  const cafeFinished = room?.status === "playing" && round === 14 && cafeAllAnswered
+  const scrambleFinished = room?.status === "playing" && round === 9 && scrambleAllAnswered
   const ordered = [...questions].sort((a,b) => a.id.localeCompare(b.id)).slice(0,5)
   const question = ordered[round]
   const answers = room?.answers || {}
@@ -412,9 +435,27 @@ export default function SakuraLobby() {
   const copyCode = async () => { try { await navigator.clipboard.writeText(code) ; setCopied(true); setToast("Game code copied") } catch { setToast(`Room code: ${code}`) } }
   const invite = async () => { const link = `${window.location.origin}/join`; try { await navigator.clipboard.writeText(`${link} — room code ${code}`); setToast("Join link and code copied") } catch { setToast(`Share code ${code}`) } }
   const chooseCharacter = async (id: CharacterId) => { try { await claimCharacter(code,id); setToast(`${getCharacter(id).name} selected`) } catch(e:any) { setToast(e.message) } }
-  const handleStart = async () => { try { if (!questions.length) throw Error("Questions are still loading"); await startGame(code); setToast("Minigame 1 started!") } catch(e:any) { setToast(e.message) } }
+  const handleStart = async () => {
+    if (launching) return
+    setLaunching(true)
+    try {
+      if (selectedMinigame === "vocab" && !questions.length) throw Error("Questions are still loading")
+      await selectMinigame(code, selectedMinigame)
+      await startGame(code)
+      setToast("Minigame started!")
+    } catch(e:any) { setToast(e.message) }
+    finally { setLaunching(false) }
+  }
+  const handleReturnToLobby = async () => {
+    try { await returnToGameMenu(code); setToast("Back to Sakura School! Choose another minigame.") }
+    catch(e:any) { setToast("Firebase permissions may need updating: " + e.message) }
+  }
   const handleAnswer = async (answer: string) => { if (!question || myAnswer !== undefined) return; try { await submitAnswer(code,question.id,answer) } catch(e:any) { setToast(e.message) } }
   const handleNext = async () => { try { if (!allAnswered) throw Error("Wait for all players to answer."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
+  const handleScrambleSubmit = async (value: string) => { if (!scramblePuzzle || scrambleMyAnswer !== undefined) return; setScrambleBusy(true); try { await submitAnswer(code, scramblePuzzle.id, value) } catch(e:any) { setToast(e.message) } finally { setScrambleBusy(false) } }
+  const handleScrambleNext = async () => { try { if (!scrambleAllAnswered) throw Error("Wait for everyone to finish."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
+  const handleCafeSubmit = async (value: string) => { if (!cafeScene || cafeMyAnswer !== undefined) return; setCafeBusy(true); try { await submitAnswer(code,cafeScene.id,value) } catch(e:any) { setToast(e.message) } finally { setCafeBusy(false) } }
+  const handleCafeNext = async () => { try { if (!cafeAllAnswered) throw Error("Wait for everyone to answer."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
   if (loading) return <main className="app-shell integration-wait">Loading your Sakura Square room…</main>
   if (error || !room) return <main className="app-shell integration-wait"><p className="integration-error">{error || "Room not found"}</p><Link to="/">Back home</Link></main>
   if (!room.players?.[uid]) return <main className="app-shell integration-wait">You're not a member of this room. <Link to="/join">Join room</Link></main>
@@ -450,11 +491,25 @@ export default function SakuraLobby() {
               ))}
             </div>
             <p style={{marginTop: 24}}>100 points per correct answer · Maximum 500 points</p>
+            {isHost ? <button className="button" style={{display:"inline-block",marginTop:12}} onClick={handleReturnToLobby}>← Choose another minigame</button> : <p>Waiting for the host to return to Sakura School… ♡</p>}
             <Link to="/" className="button" style={{display: "inline-block", marginTop: 12}}>Back to home</Link>
           </div>
         </section>
       </main>
     )
+  }
+  if (cafeFinished) {
+    const ranking = players.map(p=>({...p,score:cafeScores.find(s=>s.id===p.id)?.score||0})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))
+    return <main className="app-shell minigame-shell"><section className="minigame-stage"><div className="question-card" style={{maxWidth:720,margin:"40px auto",textAlign:"center"}}><span className="question-kicker">MY MELODY'S RESULTS</span><h1>🎀 Café Complete!</h1><p>Thank you for visiting! Here's the leaderboard for this minigame.</p><div style={{display:"grid",gap:12,marginTop:24}}>{ranking.map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:16,borderRadius:14,background:"#fff0f5"}}><strong>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`} {p.name}</strong><strong>{p.score} pts</strong></div>)}</div>{isHost?<button className="button" style={{marginTop:20}} onClick={handleReturnToLobby}>← Choose another minigame</button>:<p>Waiting for the host to return to Sakura School… ♡</p>}<div><Link to="/">Back to home</Link></div></div></section>{toast&&<div className="toast">{toast}</div>}</main>
+  }
+  if (room.status === "playing" && round >= 10 && round <= 14) {
+    return <><ConversationCafe scene={cafeScene} index={cafeIndex} total={CAFE_SCENES.length} score={cafeScores.find(s=>s.id===uid)?.score||0} players={players} myAnswer={cafeMyAnswer} answerCount={cafeAnswerCount} isHost={isHost} onSubmit={handleCafeSubmit} onNext={handleCafeNext} busy={cafeBusy}/>{toast&&<div className="toast">{toast}</div>}</>
+  }
+  if (scrambleFinished) {
+    return <main className="app-shell minigame-shell"><section className="minigame-stage"><div className="question-card" style={{maxWidth:700,margin:"40px auto",textAlign:"center"}}><span className="question-kicker">KUROMI'S RESULTS</span><h1>💜 Sentence Scramble Complete!</h1><p>Two minigames down! Here are your combined scores.</p><div style={{display:"grid",gap:12,marginTop:24}}>{players.map(p => ({...p, score:(scores.find(s=>s.id===p.id)?.score||0)+(scrambleScores.find(s=>s.id===p.id)?.score||0)})).sort((a,b)=>b.score-a.score).map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:16,borderRadius:14,background:"#f8eafa"}}><strong>{i+1}. {p.name}</strong><strong>{p.score} pts</strong></div>)}</div><p>Minigame 3 is coming next!</p>{isHost ? <button className="button" onClick={handleReturnToLobby}>← Choose another minigame</button> : <p>Waiting for the host to return to Sakura School… ♡</p>}<Link to="/">Back to home</Link></div></section></main>
+  }
+  if (room.status === "playing" && round >= 5 && round <= 9) {
+    return <><SentenceScramble puzzle={scramblePuzzle} index={scrambleIndex} total={SCRAMBLE_PUZZLES.length} score={myScore+(scrambleScores.find(s=>s.id===uid)?.score||0)} players={players} myAnswer={scrambleMyAnswer} answerCount={scrambleAnswerCount} isHost={isHost} onSubmit={handleScrambleSubmit} onNext={handleScrambleNext} busy={scrambleBusy}/>{toast&&<div className="toast">{toast}</div>}</>
   }
   if (room.status === "playing") {
     if (!question) return <main className="app-shell integration-wait">Loading Minigame 1 questions… {questionError}</main>
@@ -491,9 +546,6 @@ export default function SakuraLobby() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">
-            <Icon name="leaf" size={23} />
-          </span>
           <span className="brand-name">Nihongo Party</span>
           <span className="brand-tag">LEARN TOGETHER</span>
         </div>
@@ -508,13 +560,6 @@ export default function SakuraLobby() {
         </div>
         <div className="top-actions">
           <button
-            aria-label={soundOn ? "Turn sound off" : "Turn sound on"}
-            className={`icon-button ${soundOn ? "" : "is-muted"}`}
-            onClick={() => setSoundOn((value) => !value)}
-          >
-            <Icon name="sound" />
-          </button>
-          <button
             aria-expanded={showSettings}
             aria-label="Open lobby settings"
             className="icon-button"
@@ -522,7 +567,6 @@ export default function SakuraLobby() {
           >
             <Icon name="gear" />
           </button>
-          <div className="teacher-avatar">{(players.find(p => p.id === uid)?.name || "P").slice(0,2).toUpperCase()}</div>
         </div>
       </header>
 
@@ -630,7 +674,13 @@ export default function SakuraLobby() {
               in the plaza.
             </span>
           </div>
-          {isHost ? <button className="start-button is-host" disabled={players.length < 2 || !questions.length} onClick={handleStart}>Start Minigame 1<span className="start-arrow">→</span></button> : <span>Waiting for host to start… ♡</span>}
+          {isHost ? <div style={{display:"grid",gap:12,minWidth:260}}>
+  <div style={{fontWeight:800,color:"#704d82"}}>🎮 Choose a Minigame</div>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#eaf6ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="vocab"} onChange={()=>setSelectedMinigame("vocab")}/> ☁️ Vocabulary Quest</label>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#f5e9ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="scramble"} onChange={()=>setSelectedMinigame("scramble")}/> 💜 Kuromi's Sentence Scramble</label>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#fff0f5",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="cafe"} onChange={()=>setSelectedMinigame("cafe")}/> 🎀 My Melody's Conversation Café</label>
+  <button className="start-button is-host" disabled={launching || players.length < 2 || (selectedMinigame==="vocab" && !questions.length)} onClick={handleStart}>{launching ? "Starting…" : "Start selected minigame"}<span className="start-arrow">→</span></button>
+</div> : <span>Waiting for host to choose a minigame… ♡</span>}
         </footer>
       </div>
 

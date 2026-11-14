@@ -127,3 +127,28 @@ export async function advanceRound(roomCode) {
   const result = await runTransaction(ref(database, `rooms/${code}/game/currentIndex`), old => (old === null && idx === 0) || old === idx ? idx + 1 : undefined, { applyLocally: false });
   if (!result.committed) throw new Error('The question has already advanced.');
 }
+
+// Host-selectable game sessions. Keep the existing startGame and answer APIs unchanged.
+export async function selectMinigame(roomCode, minigame) {
+  const code = codeOf(roomCode);
+  const user = await getCurrentPlayer();
+  const room = (await get(ref(database, `rooms/${code}`))).val();
+  if (!room || room.hostId !== user.uid) throw new Error('Only the host can choose a game.');
+  if (room.status !== 'lobby') throw new Error('Choose a game from the lobby.');
+  if (!['vocab','scramble','cafe'].includes(minigame)) throw new Error('This minigame is not available yet.');
+  const startIndex = minigame === 'cafe' ? 10 : minigame === 'scramble' ? 5 : 0;
+  await set(ref(database, `rooms/${code}/game/currentIndex`), startIndex);
+}
+
+// Return to the same room to choose another minigame. Reset answer records so replay works.
+// Requires Firebase rules to allow host writes to status/game and removal of answers.
+export async function returnToGameMenu(roomCode) {
+  const code = codeOf(roomCode);
+  const user = await getCurrentPlayer();
+  const room = (await get(ref(database, `rooms/${code}`))).val();
+  if (!room || room.hostId !== user.uid) throw new Error('Only the host can return to the lobby.');
+  if (room.status !== 'playing') throw new Error('The game is not active.');
+  await set(ref(database, `rooms/${code}/answers`), null);
+  await set(ref(database, `rooms/${code}/game/currentIndex`), 0);
+  await set(ref(database, `rooms/${code}/status`), 'lobby');
+}
