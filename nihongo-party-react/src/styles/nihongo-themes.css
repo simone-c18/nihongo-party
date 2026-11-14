@@ -1,0 +1,62 @@
+/* Nihongo Party: visual-only minigame refresh. Existing gameplay stays unchanged. */
+/* Cinnamoroll — Cloud Classroom */
+.minigame-shell {background:linear-gradient(180deg,#eaf7ff 0%,#f6fbff 55%,#fffdf6 100%);color:#38586a;min-height:100vh}
+.minigame-shell .topbar {background:#ffffffd9;border-bottom:1px solid #d9edf8;box-shadow:none}
+.minigame-shell .brand-name,.minigame-shell .round-progress strong {color:#407a9b}
+.minigame-shell .score-chip {background:#fff;border:1px solid #cce8f6;color:#467b97;border-radius:999px}
+.minigame-shell .minigame-stage {position:relative;isolation:isolate}
+.minigame-shell .question-card {background:#fffefa;border:2px solid #cfe8f5;border-radius:26px;box-shadow:0 14px 35px #83b5d021;position:relative;overflow:hidden}
+.minigame-shell .question-card::before {content:"";display:block;width:100%;height:9px;position:absolute;left:0;top:0;background:repeating-linear-gradient(90deg,#c4e6f8 0 44px,#eaf5ff 44px 88px)}
+.minigame-shell .question-kicker {color:#518bab;letter-spacing:.12em}
+.minigame-shell .question-number {color:#7296aa}
+.minigame-shell .question-card h1 {color:#355f78}
+.minigame-shell .answer-button {background:#f7fcff;border:2px solid #d8ebf6;border-radius:16px;color:#365b70;box-shadow:0 3px 0 #e2f0f8;transition:transform .15s,border-color .15s,background .15s}
+.minigame-shell .answer-button:hover:not(:disabled) {transform:translateY(-2px);border-color:#8ec8e7;background:#edf8ff}
+.minigame-shell .answer-button.is-selected {border-color:#77b7dc;background:#e6f5ff}
+.minigame-shell .answer-button.is-correct {border-color:#8cc5a9;background:#edf9f2}
+.minigame-shell .answer-button.is-wrong {border-color:#e7a3a9;background:#fff1f1}
+.minigame-shell .round-actions button {background:#78b8da;color:#fff;border-radius:14px}
+.minigame-shell .minigame-party {background:#ffffffa8;border:1px solid #dceef6;border-radius:20px}
+@media(max-width:700px){.minigame-shell .question-card{border-radius:20px}}
+
+/* Kuromi — Study Notebook */
+.scramble-page {background:linear-gradient(180deg,#f3edfa 0%,#faf7ff 55%,#fffdfc 100%);color:#493e5d}
+.scramble-top {border-bottom:1px solid #e7ddef;max-width:1040px}
+.scramble-layout {max-width:1040px;grid-template-columns:215px minmax(0,1fr);align-items:start;gap:22px}
+.scramble-guide {padding-top:24px}
+.scramble-guide img {max-height:190px;filter:drop-shadow(0 8px 10px #5d48732b)}
+.scramble-speech {border:1px solid #d9cbe7;border-radius:16px;box-shadow:0 5px 15px #5d487310}
+.scramble-card {border:1px solid #d9cbe7;border-radius:19px;background:repeating-linear-gradient(to bottom,#fff 0,#fff 37px,#f1eaf7 38px,#fff 39px);box-shadow:0 12px 32px #64537c18;position:relative;padding:35px 38px}
+.scramble-card::before {content:"";position:absolute;left:16px;top:24px;bottom:24px;border-left:2px solid #e8cddd;pointer-events:none}
+.scramble-kicker {color:#80649c}
+.scramble-card h1 {color:#40324f}
+.scramble-meter {background:#eae0f2}
+.scramble-meter div {background:#9880b9}
+.scramble-answer {background:#fcfaff;border:2px dashed #bfb0d3;border-radius:13px}
+.scramble-answer button,.scramble-bank button {border-radius:10px;border:1px solid #c6b6d8;box-shadow:0 3px 0 #e0d7ea}
+.scramble-bank button {background:#eae2f4}
+.scramble-bank button:hover:not(:disabled) {background:#ded1ee}
+.scramble-check,.scramble-next {background:#8066a3}
+.scramble-clear {background:#f0ebf5}
+.scramble-hint {color:#735792}
+@media(max-width:700px){.scramble-layout{grid-template-columns:1fr}.scramble-guide{padding-top:0}.scramble-card{padding:25px 24px}}
+
+/* My Melody — Strawberry Café */
+.cafe-page {background:linear-gradient(180deg,#fff4f5,#fff9f3 65%,#fffdfb);color:#795263}
+.cafe-top {border-bottom:1px solid #f4d9dd}
+.cafe-scene {background:linear-gradient(180deg,#fff0ef 0 55%,#e7b9ad 55% 58%,#f6e6d9 58%);border:2px solid #ebc6c6;border-radius:20px 20px 0 0;box-shadow:0 12px 30px #a46e771a}
+.cafe-scene::before {content:"";position:absolute;left:25px;top:54px;width:140px;height:128px;border:9px solid #fffdf9;border-radius:65px 65px 12px 12px;background:linear-gradient(180deg,#d5edf3 0%,#e8f4f2 70%,#c6dcc9 70%);box-shadow:0 0 0 2px #e6bdbb;opacity:.85}
+.cafe-window {opacity:.45}
+.cafe-sign {background:#fffdf8;border:1px solid #ddb1b5;border-radius:10px;color:#aa657e;box-shadow:0 3px 0 #e7c7c4}
+.cafe-character {z-index:1}
+.cafe-dialogue {z-index:2;background:#fffdfaed;border:1px solid #e9bfc8;border-radius:13px;box-shadow:0 6px 20px #aa758024}
+.cafe-speaker {color:#b36d89}
+.cafe-panel {border:2px solid #ebc6c6;border-top:0;background:#fffefa;border-radius:0 0 20px 20px;box-shadow:0 12px 30px #a46e771a}
+.cafe-progress {background:#f7e3e4}
+.cafe-progress span {background:#d997a8}
+.cafe-choices button {background:#fffaf8;border:1px solid #efd9d8;border-radius:12px;box-shadow:0 2px 0 #f4e7e5}
+.cafe-choices button:hover:not(:disabled) {background:#fff0f0;border-color:#e2b6c3}
+.cafe-choices button.chosen {background:#fff0f2;border-color:#d798ad}
+.cafe-choice-letter {background:#f6e1e6;color:#9c617a}
+.cafe-submit,.cafe-next {background:#c9829c;border-radius:12px}
+@media(max-width:640px){.cafe-scene::before{width:95px;height:100px;left:12px;top:48px}}
