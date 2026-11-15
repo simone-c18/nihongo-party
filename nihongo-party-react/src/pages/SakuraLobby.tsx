@@ -204,9 +204,7 @@ function Plaza({ players, currentId }: { players: Player[]; currentId: string })
           <span className="road-line road-line-two" />
           <span className="road-line road-line-three" />
           <span className="road-line road-line-four" />
-          <span className="petal-pile petal-pile-one" />
-          <span className="petal-pile petal-pile-two" />
-        </div>
+          </div>
         <div className="sidewalk sidewalk-bottom" />
         <div className="curb curb-top" />
         <div className="curb curb-bottom" />
@@ -247,17 +245,7 @@ function Plaza({ players, currentId }: { players: Player[]; currentId: string })
           <span className="fountain-water" />
           <span className="fountain-base" />
         </div>
-        <div className="vending-machine">
-          <span className="vending-glass">
-            <i />
-            <i />
-            <i />
-            <i />
-          </span>
-          <span className="vending-panel" />
-          <span className="vending-slot" />
-        </div>
-        <div className="watering-can">
+<div className="watering-can">
           <span />
         </div>
         <div className="plaza-cat">
@@ -337,7 +325,6 @@ export default function SakuraLobby() {
   const [questions, setQuestions] = useState<any[]>([])
   const [questionError, setQuestionError] = useState("")
   const [copied, setCopied] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [toast, setToast] = useState("")
   const [scrambleBusy, setScrambleBusy] = useState(false)
   const [selectedMinigame, setSelectedMinigame] = useState("vocab")
@@ -544,31 +531,7 @@ export default function SakuraLobby() {
   if (room.status !== "lobby") return <main className="app-shell integration-wait">Room state: {room.status}</main>
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-name">Nihongo Party</span>
-          <span className="brand-tag">LEARN TOGETHER</span>
-        </div>
-        <div className="lesson-chip">
-          <span className="lesson-icon">
-            <Icon name="book" size={17} />
-          </span>
-          <span>
-            <small>TODAY’S MISSION</small>
-            <strong>Japanese Word Quest</strong>
-          </span>
-        </div>
-        <div className="top-actions">
-          <button
-            aria-expanded={showSettings}
-            aria-label="Open lobby settings"
-            className="icon-button"
-            onClick={() => setShowSettings((value) => !value)}
-          >
-            <Icon name="gear" />
-          </button>
-        </div>
-      </header>
+      <header className="topbar"><div className="brand"><span className="brand-name">Nihongo Party</span></div></header>
 
       <div className="content">
         <Link className="lobby-back" to="/">← Home</Link>
@@ -647,7 +610,7 @@ export default function SakuraLobby() {
                           ? "YOU"
                           : claimedBy
                             ? claimedBy.name
-                            : "FREE"}
+                            : ""}
                       </span>
                     </button>
                   )
@@ -683,29 +646,6 @@ export default function SakuraLobby() {
 </div> : <span>Waiting for host to choose a minigame… ♡</span>}
         </footer>
       </div>
-
-      {showSettings && (
-        <div className="settings-popover">
-          <div>
-            <strong>Lobby settings</strong>
-            <button
-              aria-label="Close settings"
-              onClick={() => setShowSettings(false)}
-            >
-              ×
-            </button>
-          </div>
-          <label>
-            <span>Lobby music</span>
-            <input
-              checked={soundOn}
-              onChange={(event) => setSoundOn(event.target.checked)}
-              type="checkbox"
-            />
-          </label>
-  
-        </div>
-      )}
 
       {toast && (
         <div className="toast">

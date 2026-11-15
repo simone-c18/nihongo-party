@@ -2129,3 +2129,67 @@ h1 {
 @media (max-width: 750px) {
   .app-shell:has(.lobby-grid) .lobby-heading h1 { font-size: clamp(29px, 7vw, 40px); }
 }
+
+/* Sakura School coquette UI: scoped to the lobby, not the minigames. */
+.app-shell:has(.lobby-grid) > .topbar {
+  height: 56px;
+  padding-inline: clamp(20px, 3.5vw, 60px);
+  background: #fffaf6;
+  border-bottom-color: #ead6d7;
+}
+.app-shell:has(.lobby-grid) .topbar .brand { min-width: 0; }
+.app-shell:has(.lobby-grid) .topbar .brand-name { color: #9e6378; }
+.app-shell:has(.lobby-grid) .copy-button {
+  background: #f8dce5 !important;
+  color: #80556a !important;
+  border: 1px solid #eec4d1 !important;
+  box-shadow: none !important;
+}
+.app-shell:has(.lobby-grid) .copy-button:hover { background: #f2c6d5 !important; }
+.app-shell:has(.lobby-grid) .invite-button {
+  background: #f2c6d5 !important;
+  color: #744c5e !important;
+  border: 1px solid #e8adbf !important;
+  box-shadow: 0 5px 0 #d9a4b6 !important;
+}
+.app-shell:has(.lobby-grid) .invite-button:hover { background: #edb7c9 !important; }
+.app-shell:has(.lobby-grid) .invite-button:active { box-shadow: 0 2px 0 #d9a4b6 !important; }
+.app-shell:has(.lobby-grid) .player-count {
+  background: #fae4eb !important;
+  color: #875c70 !important;
+}
+.app-shell:has(.lobby-grid) .player-state.is-ready { color: #a16d80 !important; }
+.app-shell:has(.lobby-grid) .connection-dot {
+  background: #d9a0b6 !important;
+  border-color: #f9e2eb !important;
+}
+.app-shell:has(.lobby-grid) .eyebrow,
+.app-shell:has(.lobby-grid) .lobby-back { color: #9f6a7d !important; }
+.app-shell:has(.lobby-grid) .eyebrow > span { background: #e8b5c5 !important; }
+/* Sakura School matching pink headings */
+.app-shell:has(.lobby-grid) .lobby-title,
+.app-shell:has(.lobby-grid) .lobby-hero h1 {
+    color: #F2C6D5 !important;
+}
+
+.app-shell:has(.lobby-grid) .topbar .brand-name {
+    color: #C68CA2 !important;
+}
+
+
+/* Sakura School matching pink headings */
+.app-shell:has(.lobby-grid) .lobby-title,
+.app-shell:has(.lobby-grid) .lobby-hero h1 {
+    color: #F2C6D5 !important;
+}
+
+.app-shell:has(.lobby-grid) .topbar .brand-name {
+    color: #C68CA2 !important;
+}
+
+
+/* Exact Sakura School heading color */
+.app-shell .lobby-heading h1 {
+    color: #F2C6D5 !important;
+}
+
