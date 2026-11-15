@@ -2052,3 +2052,80 @@ h1 {
   text-align: center;
 }
 .top-actions { min-width: auto; }
+/* Sakura School courtyard polish â€” CSS only; no generated art or gameplay changes. */
+/* Scoped to lobby so the three minigames retain their own visual themes. */
+.app-shell:has(.lobby-grid) .content { max-width: 1320px; }
+.app-shell:has(.lobby-grid) .lobby-heading { gap: 18px; margin-bottom: 20px; }
+.app-shell:has(.lobby-grid) .lobby-heading h1 { letter-spacing: -.035em; }
+.app-shell:has(.lobby-grid) .lobby-heading p { max-width: 610px; line-height: 1.5; }
+.app-shell:has(.lobby-grid) .lobby-grid { grid-template-columns: minmax(0,1fr) minmax(280px,310px); gap: 18px; align-items: stretch; }
+.app-shell:has(.lobby-grid) .plaza-card { min-height: 510px; border: 7px solid #fffaf5; border-radius: 27px; box-shadow: 0 18px 42px rgba(93,89,76,.12), 0 4px 0 rgba(143,116,103,.08); background: #d8ebed; }
+.app-shell:has(.lobby-grid) .plaza-sky { background: linear-gradient(180deg,#bcdde7 0%,#e4f0e9 90%); }
+.app-shell:has(.lobby-grid) .plaza-card::after { background: linear-gradient(132deg,rgba(255,252,241,.27),transparent 37%,rgba(244,205,204,.08) 85%); }
+.app-shell:has(.lobby-grid) .school { box-shadow: inset 0 0 0 4px #fae9d9, 0 6px 0 rgba(153,106,89,.17), 0 14px 18px rgba(96,75,66,.19); }
+.app-shell:has(.lobby-grid) .school-roof { box-shadow: 0 5px 0 rgba(76,55,51,.19), 0 10px 12px rgba(70,53,49,.13); }
+.app-shell:has(.lobby-grid) .plaza-ground { background: linear-gradient(180deg,#c5bdb0,#b6afa4 60%,#c6bcb0); }
+.app-shell:has(.lobby-grid) .sidewalk { background-color:#e8dfd1; background-image: radial-gradient(circle at 9px 9px,rgba(255,255,255,.3) 0 2px,transparent 2px),linear-gradient(rgba(154,138,123,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(154,138,123,.16) 1px,transparent 1px); }
+.app-shell:has(.lobby-grid) .road { background: radial-gradient(circle at 20% 30%,rgba(255,255,255,.16) 0 1px,transparent 2px),linear-gradient(90deg,#aaa69b,#c0b9ad 50%,#aaa69b); }
+.app-shell:has(.lobby-grid) .tree { filter: drop-shadow(0 12px 8px rgba(83,82,67,.18)); }
+.app-shell:has(.lobby-grid) .tree-crown span { box-shadow: inset -9px -11px 0 rgba(190,115,139,.09), inset 7px 8px 0 rgba(255,255,255,.16), 0 4px 7px rgba(125,92,94,.12); }
+.app-shell:has(.lobby-grid) .roster-card { border-radius: 23px; border: 1px solid #eadfd7; box-shadow: 0 12px 28px rgba(96,79,74,.08); background: #fffdf9; }
+.app-shell:has(.lobby-grid) .character-option { transition: transform .18s ease, box-shadow .18s ease; }
+.app-shell:has(.lobby-grid) .character-option:hover:not(:disabled) { transform: translateY(-3px); }
+.app-shell:has(.lobby-grid) .code-card { box-shadow: 0 8px 24px rgba(98,78,76,.07); }
+/* A full-width, tidy activity board below the courtyard. */
+.app-shell:has(.lobby-grid) .lobby-footer { display: block; margin-top: 18px; padding: 18px; border: 1px solid #eadedc; border-radius: 23px; background: linear-gradient(145deg,#fffdf9,#fff5f5); box-shadow: 0 10px 28px rgba(107,82,83,.07); }
+.app-shell:has(.lobby-grid) .lobby-footer .tip { display:none; }
+.app-shell:has(.lobby-grid) .lobby-footer > div:not(.tip) { width:100%; min-width:0 !important; }
+.app-shell:has(.lobby-grid) .lobby-footer > div:not(.tip):has(input[name="minigame"]) { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px !important; }
+.app-shell:has(.lobby-grid) .lobby-footer > div:not(.tip):has(input[name="minigame"]) > div:first-child { grid-column:1/-1; font-size:15px; letter-spacing:.01em; }
+.app-shell:has(.lobby-grid) .lobby-footer label:has(input[name="minigame"]) { min-height:78px; margin:0; border:2px solid transparent; border-radius:17px !important; font-size:14px; font-weight:750; line-height:1.35; box-shadow:0 4px 12px rgba(92,76,86,.05); transition:border-color .15s,transform .15s; }
+.app-shell:has(.lobby-grid) .lobby-footer label:has(input[name="minigame"]:checked) { border-color:#b58aa5; box-shadow:0 0 0 2px rgba(181,138,165,.12); }
+.app-shell:has(.lobby-grid) .lobby-footer label:has(input[name="minigame"]):hover { transform:translateY(-2px); }
+.app-shell:has(.lobby-grid) .lobby-footer input[name="minigame"] { accent-color:#986c91; flex-shrink:0; }
+.app-shell:has(.lobby-grid) .lobby-footer .start-button { grid-column:1/-1; width:100%; justify-content:center; min-height:48px; }
+.app-shell:has(.lobby-grid) .lobby-footer > span { display:block; text-align:center; padding:10px; color:#856879; }
+@media(max-width:900px){ .app-shell:has(.lobby-grid) .lobby-grid {grid-template-columns:1fr;} .app-shell:has(.lobby-grid) .plaza-card{min-height:470px;} }
+@media(max-width:650px){ .app-shell:has(.lobby-grid) .plaza-card{min-height:420px;} .app-shell:has(.lobby-grid) .lobby-footer > div:not(.tip):has(input[name="minigame"]){grid-template-columns:1fr;} .app-shell:has(.lobby-grid) .lobby-footer label:has(input[name="minigame"]){min-height:54px;} }
+@media(prefers-reduced-motion:reduce){ .app-shell:has(.lobby-grid) .character-option,.app-shell:has(.lobby-grid) .lobby-footer label{transition:none;} }
+
+
+/* Sakura Courtyard Cleanup V2 — isolated, reversible visual adjustments. */
+/* The mystery objects were flower-bed props placed behind the trees. */
+.app-shell:has(.lobby-grid) .plaza-ground .flower-bed { display: none !important; }
+/* Remove the scavenger-hunt prop, but keep character avatars and movement. */
+.app-shell:has(.lobby-grid) .plaza-ground .watering-can { display: none !important; }
+/* The ? in the courtyard is a player avatar placeholder, NOT a prop.
+   We deliberately leave .scene-player and .avatar alone. */
+/* A warm stone-paver texture replaces the flat gray asphalt feeling. */
+.app-shell:has(.lobby-grid) .plaza-ground .road {
+  background-color: #bfb6a9;
+  background-image:
+    linear-gradient(90deg,rgba(255,250,241,.10),transparent 25%,rgba(95,78,65,.05) 100%),
+    repeating-linear-gradient(0deg, transparent 0 33px, rgba(116,102,89,.13) 34px, rgba(255,255,255,.17) 35px, transparent 36px),
+    repeating-linear-gradient(90deg, transparent 0 63px, rgba(116,102,89,.12) 64px, rgba(255,255,255,.15) 65px, transparent 66px),
+    linear-gradient(180deg,#c9c0b2,#b7afa4 70%,#c9c0b3);
+  background-size: auto;
+  box-shadow: inset 0 10px 22px rgba(80,69,58,.08), inset 0 -8px 18px rgba(80,69,58,.07);
+}
+/* Remove the two road-stripe lines; they're out of place in a courtyard. */
+.app-shell:has(.lobby-grid) .plaza-ground .road::before,
+.app-shell:has(.lobby-grid) .plaza-ground .road::after,
+.app-shell:has(.lobby-grid) .plaza-ground .road-line { display: none !important; }
+/* Gentle depth without adding objects or affecting collision/movement. */
+.app-shell:has(.lobby-grid) .plaza-ground .tree { filter: drop-shadow(3px 14px 8px rgba(85,72,65,.18)); }
+.app-shell:has(.lobby-grid) .plaza-ground .tree-crown span {
+  box-shadow: inset -12px -12px 14px rgba(168,92,120,.12), inset 8px 9px 10px rgba(255,255,255,.22), 0 6px 8px rgba(114,79,87,.12);
+}
+/* Keep the page title within the viewport on wide screens. */
+.app-shell:has(.lobby-grid) .lobby-heading h1 {
+  font-size: clamp(30px, 3.15vw, 48px);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  letter-spacing: -.035em;
+}
+.app-shell:has(.lobby-grid) .lobby-heading { align-items: center; }
+.app-shell:has(.lobby-grid) .lobby-heading > div:first-child { min-width: 0; }
+@media (max-width: 750px) {
+  .app-shell:has(.lobby-grid) .lobby-heading h1 { font-size: clamp(29px, 7vw, 40px); }
+}
