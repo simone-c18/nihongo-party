@@ -1,37 +1,39 @@
-
 body{
-    
+    overflow-x: hidden;
     margin: 0;
     padding: 0;
     font-family: 'Irish Grover', cursive;
     background-color: rgba(255, 214, 226, 0.48);
+    width: 100vw;
+    box-sizing: border-box;
 }
 
 .container {
-    max-width: 1800px;
-    min-height: 100vh;
+    overflow: hidden;
+    width: 100%;
+    max-width: 1400px;
+    height: 100vh;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 30px 20px;
+    padding: 1.5vh 2vw;
+    gap: clamp(8px, 1.5vh, 20px);
     text-align: center;
     box-sizing: border-box;
-    gap: 20px;
     font-family: 'Irish Grover', cursive;
-    background-color: rgba(255, 214, 226, 0.48);
 }
 
 h1{
-    font-size: 90px;
+    font-size: clamp(36px, 6vw, 80px);
     color: rgba(253, 136, 158);
     margin: 0px;
     font-weight: 330;
 }
 
 h2{
-    font-size: 60px;
+    font-size: clamp(28px, 4.5vw, 55px);
     color: rgba(253, 136, 158);
     margin: 0px;
     font-weight: 330;
@@ -40,41 +42,50 @@ h2{
 h3{
     font-family: "Inria Serif";
     color: rgba(252, 156, 188);
-    font-size: 35px;
+    font-size: clamp(16px, 2.5vw, 30px);
     font-weight: 330;
     margin: 0px;
 
 }
 
+h4{
+    font-family: 'Inria Serif', serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: rgba(252, 156, 188, 1);
+    margin-bottom: 5px;
+}
+
 img{
-    max-width: 700px;
+    max-width: 80vw;
+    max-height: 35vh;
+    width: auto;
     height: auto;
-    width: 50vw;
+    object-fit:contain;
     display: block;
-    margin: 0;
+    margin: 0 auto;
     
 }
 
 .button_group{
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 90%;
     max-width: 300px;
-    margin-top: 30px;
-    gap: 30px;
+    gap: 2.5vh;
 }
 
 .button{
     display:block;
     width: 100%;
-    padding: 30px ;
+    padding: clamp(12px, 2vh, 25px)20px;
     background-color: rgba(255, 0, 43, 0.22);
     box-shadow: 2px 8px 4px 0 rgba(135, 10, 10, 0.25);
     color: white;
     text-decoration: none;
     border-radius: 50px;
     text-align: center;
-    font-size: 30px;
+    font-size: clamp(16px, 3vw, 28px);
     font-weight: 400;
     line-height: normal;
     box-sizing: border-box;
@@ -131,12 +142,13 @@ img{
     font-size: 28px;
     font-weight: bold;
     font-family: 'Irish Grover', cursive;
+    color: #f06198;
     box-sizing: border-box;
     box-shadow: none;
 }
 
 .code_box:focus{
-    border-color: rgba(192, 2, 38, 0.8);
+    border-color: #f06198;
 }
 
 .secondary_button {
@@ -166,45 +178,39 @@ img{
     box-sizing: border-box;
 }
 
-.code_label{
-    font-family: 'Inria Serif', serif;
-    font-size: 16px;
-    letter-spacing: 2px;
-    color: rgba(252, 156, 188, 1);
-    margin-bottom: 5px;
-}
+
 
 .code{
     font-size: 48px;
-    color: #a44865;
+    color: #f06198;
     letter-spacing: 4px;
+    margin-top: 15px;
+
 }
 
-.player_count {
-    font-family: 'Inria Serif', serif;
-    font-size: 22px;
-    color: rgba(252, 156, 188, 1);
-    margin: 5px 0;
-}
 
-.avatar_grid {
+
+.avatar_row {
     display: flex;
-    gap: 15px;
+    flex-direction: row;
     justify-content: center;
-    margin: 10px 0 20px 0;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+    width: 100%;
+    max-width: 500px;
 }
 
 .avatar_slot {
-    font-size: 40px;
-    width: 80px;
-    height: 80px;
     display: flex;
+    flex-direction:column;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.4);
-    box-sizing: border-box;
-    transition: all 0.3s ease;
+    padding: 0.5rem;
+    width: 85px;
+    background: transparent;
+    min-height: 110px;
+    border: none;
 }
 
 .avatar_slot.empty {
@@ -213,10 +219,26 @@ img{
 }
 
 .avatar_slot.joined {
-    opacity: 1;
-    filter: grayscale(0%);
+    border: none;
+    background: transparent
+}
+.avatar_slot_name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  white-space: nonrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.5rem;
+  color: #d16ba5;
+  max-width: 100%;
 }
 
+.lobby_avatar_img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
 .lobby_begin {
     width: 100%;
     max-width: 300px;
@@ -227,16 +249,11 @@ img{
     margin-bottom: 10px;
 }
 
-.waiting_text {
-    font-family: 'Inria Serif', serif;
-    color: rgba(252, 156, 188, 1);
-    font-size: 20px;
-    margin: 0;
-}
 
 .hidden {
     display: none !important;
 }
+
 .code_box:focus {
     outline: none;
 }
