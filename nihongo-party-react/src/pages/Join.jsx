@@ -1,4 +1,4 @@
-
+﻿
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { findRoom } from '../firebase/roomcode.js'
@@ -87,12 +87,12 @@ export default function Join() {
 
   return (
     <main className="container">
-      <h1>join room</h1>
+      <h2>enter room<br />code below:</h2>
 
-      <p>enter your room code</p>
+      
 
       <div
-        className="code_input_group"
+        className="form"
         onPaste={handlePaste}
       >
         {chars.map((c, i) => (
@@ -134,3 +134,4 @@ export default function Join() {
     </main>
   )
 }
+

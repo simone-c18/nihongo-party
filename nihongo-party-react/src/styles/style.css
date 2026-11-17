@@ -252,3 +252,84 @@ button.button {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* Profile page styling */
+.nickname_section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+}
+
+.nickname_section h2 {
+    font-size: clamp(36px, 5vw, 60px);
+}
+
+.nickname_section h3 {
+    font-size: clamp(22px, 3vw, 32px);
+}
+
+.nickname_input {
+    width: min(100%, 350px);
+    padding: 18px 20px;
+    border: 2px solid #e3ccd1;
+    border-radius: 25px;
+    background: #e3ccd1;
+    color: #a44865;
+    font-family: 'Irish Grover', cursive;
+    font-size: 24px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.nickname_input:focus {
+    outline: 2px solid #c00226;
+}
+
+.nickname_section p {
+    color: #a44865;
+    font-family: 'Inria Serif', serif;
+    font-size: 17px;
+}
+
+.container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+}
+
+.container form .button_group {
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .container h1 {
+        font-size: 48px;
+    }
+
+    .container h2 {
+        font-size: 36px;
+    }
+
+    .container h3 {
+        font-size: 23px;
+    }
+
+    .container .form {
+        gap: 8px;
+        max-width: 100%;
+    }
+
+    .container .code_box {
+        width: min(13vw, 50px);
+        height: 62px;
+        border-radius: 15px;
+    }
+
+    .container .button_group {
+        max-width: 280px;
+    }
+}

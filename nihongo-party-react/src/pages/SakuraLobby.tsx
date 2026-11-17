@@ -541,7 +541,7 @@ export default function SakuraLobby() {
             <div className="eyebrow">
               <span /> LIVE LOBBY
             </div>
-            <h1>Meet us in Sakura School</h1>
+            <h1>Meet Us In Nihongo Party Academy</h1>
             <p>
               Choose your character, walk around with WASD, and get ready for
               today’s Japanese mission.
@@ -639,7 +639,7 @@ export default function SakuraLobby() {
           </div>
           {isHost ? <div style={{display:"grid",gap:12,minWidth:260}}>
   <div style={{fontWeight:800,color:"#704d82"}}>🎮 Choose a Minigame</div>
-  <label style={{display:"flex",gap:10,alignItems:"center",background:"#eaf6ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="vocab"} onChange={()=>setSelectedMinigame("vocab")}/> ☁️ Vocabulary Quest</label>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#eaf6ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="vocab"} onChange={()=>setSelectedMinigame("vocab")}/> ☁️ Cinnamoroll's Vocab Quest</label>
   <label style={{display:"flex",gap:10,alignItems:"center",background:"#f5e9ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="scramble"} onChange={()=>setSelectedMinigame("scramble")}/> 💜 Kuromi's Sentence Scramble</label>
   <label style={{display:"flex",gap:10,alignItems:"center",background:"#fff0f5",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="cafe"} onChange={()=>setSelectedMinigame("cafe")}/> 🎀 My Melody's Conversation Café</label>
   <button className="start-button is-host" disabled={launching || players.length < 2 || (selectedMinigame==="vocab" && !questions.length)} onClick={handleStart}>{launching ? "Starting…" : "Start selected minigame"}<span className="start-arrow">→</span></button>

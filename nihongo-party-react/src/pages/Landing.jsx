@@ -6,6 +6,7 @@ export default function Landing() {
   return (
     <main className="container">
       <h1>nihongo party</h1>
+      <h3>the fun way to learn Japanese!</h3>
 
       <img src={landing} alt="Two Animated Bears" />
 

@@ -2193,3 +2193,17 @@ h1 {
     color: #F2C6D5 !important;
 }
 
+
+/* Sakura Lobby: Derin's requested colors */
+.app-shell:not(.minigame-shell) {
+    background: linear-gradient(145deg, #fff6fa, #ffe8f1);
+}
+
+.app-shell:not(.minigame-shell) .lobby-hero h1 {
+    color: #a83f70;
+}
+
+/* Dark pink Sakura Academy heading */
+.app-shell:not(.minigame-shell) .lobby-heading h1 {
+    color: #FD889E !important;
+}
