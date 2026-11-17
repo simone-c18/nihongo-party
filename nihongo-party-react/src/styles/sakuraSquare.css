@@ -2196,7 +2196,7 @@ h1 {
 
 /* Sakura Lobby: Derin's requested colors */
 .app-shell:not(.minigame-shell) {
-    background: linear-gradient(145deg, #fff6fa, #ffe8f1);
+    background: linear-gradient(145deg, #fae7ed, #fae7ed);
 }
 
 .app-shell:not(.minigame-shell) .lobby-hero h1 {
