@@ -6,6 +6,7 @@ import { getQuestions } from "../firebase/questions.js"
 import { prepareMinigame1 } from "../firebase/minigame1.js"
 import SentenceScramble, { SCRAMBLE_PUZZLES } from "./SentenceScramble.jsx"
 import ConversationCafe, { CAFE_SCENES } from "./ConversationCafe.jsx"
+import Leaderboard from "./Leaderboard.jsx"
 import "../styles/sakuraSquare.css"
 import "../styles/nihongo-themes.css"
 import "../styles/nihongo-polish-v2.css"
@@ -448,52 +449,49 @@ export default function SakuraLobby() {
   if (!room.players?.[uid]) return <main className="app-shell integration-wait">You're not a member of this room. <Link to="/join">Join room</Link></main>
   if (gameFinished) {
     return (
-      <main className="app-shell minigame-shell">
-        <header className="topbar">
-          <div className="brand"><span className="brand-mark"><Icon name="leaf" size={23}/></span><span className="brand-name">Nihongo Party</span></div>
-          <div className="round-progress"><span>MINIGAME 1 COMPLETE</span><strong>5 / 5</strong></div>
-          <div className="score-chip">Your score: {myScore} pts</div>
-        </header>
-        <section className="minigame-stage">
-          <div className="question-card" style={{maxWidth: 700, margin: "40px auto", textAlign: "center"}}>
-            <span className="question-kicker">SAKURA RESULTS</span>
-            <h1>🌸 Final Leaderboard 🌸</h1>
-            <p>Great job, everyone! Here are the final scores.</p>
-            <div style={{display: "grid", gap: 12, marginTop: 28, textAlign: "left"}}>
-              {scores.map((player, index) => (
-                <div key={player.id} style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-                  background: player.id === uid ? "#ffe4ef" : "#fff7fa",
-                  border: player.id === uid ? "2px solid #ef91b4" : "1px solid #f3d8e3",
-                  borderRadius: 16
-                }}>
-                  <strong style={{minWidth: 40, fontSize: 24}}>{index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}</strong>
-                  <Avatar player={player}/>
-                  <div style={{flex: 1, minWidth: 0}}>
-                    <strong>{player.name}{player.id === uid ? " (You)" : ""}</strong>
-                    <div style={{fontSize: 13, opacity: 0.75}}>{player.correctCount} / 5 correct</div>
-                  </div>
-                  <strong style={{whiteSpace: "nowrap"}}>{player.score} pts</strong>
-                </div>
-              ))}
-            </div>
-            <p style={{marginTop: 24}}>100 points per correct answer · Maximum 500 points</p>
-            {isHost ? <button className="button" style={{display:"inline-block",marginTop:12}} onClick={handleReturnToLobby}>← Choose another minigame</button> : <p>Waiting for the host to return to Sakura School… ♡</p>}
-            <Link to="/" className="button" style={{display: "inline-block", marginTop: 12}}>Back to home</Link>
-          </div>
-        </section>
-      </main>
+      <>
+        <Leaderboard
+          players={scores.map(p => ({ id: p.id, name: p.name, points: p.score }))}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
     )
   }
   if (cafeFinished) {
-    const ranking = players.map(p=>({...p,score:cafeScores.find(s=>s.id===p.id)?.score||0})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))
-    return <main className="app-shell minigame-shell"><section className="minigame-stage"><div className="question-card" style={{maxWidth:720,margin:"40px auto",textAlign:"center"}}><span className="question-kicker">MY MELODY'S RESULTS</span><h1>🎀 Café Complete!</h1><p>Thank you for visiting! Here's the leaderboard for this minigame.</p><div style={{display:"grid",gap:12,marginTop:24}}>{ranking.map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:16,borderRadius:14,background:"#fff0f5"}}><strong>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`} {p.name}</strong><strong>{p.score} pts</strong></div>)}</div>{isHost?<button className="button" style={{marginTop:20}} onClick={handleReturnToLobby}>← Choose another minigame</button>:<p>Waiting for the host to return to Sakura School… ♡</p>}<div><Link to="/">Back to home</Link></div></div></section>{toast&&<div className="toast">{toast}</div>}</main>
+    return (
+      <>
+        <Leaderboard
+          players={cafeScores.map(p => ({ id: p.id, name: p.name, points: p.score }))}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
+    )
   }
   if (room.status === "playing" && round >= 10 && round <= 14) {
     return <><ConversationCafe scene={cafeScene} index={cafeIndex} total={CAFE_SCENES.length} score={cafeScores.find(s=>s.id===uid)?.score||0} players={players} myAnswer={cafeMyAnswer} answerCount={cafeAnswerCount} isHost={isHost} onSubmit={handleCafeSubmit} onNext={handleCafeNext} busy={cafeBusy}/>{toast&&<div className="toast">{toast}</div>}</>
   }
   if (scrambleFinished) {
-    return <main className="app-shell minigame-shell"><section className="minigame-stage"><div className="question-card" style={{maxWidth:700,margin:"40px auto",textAlign:"center"}}><span className="question-kicker">KUROMI'S RESULTS</span><h1>💜 Sentence Scramble Complete!</h1><p>Two minigames down! Here are your combined scores.</p><div style={{display:"grid",gap:12,marginTop:24}}>{players.map(p => ({...p, score:(scores.find(s=>s.id===p.id)?.score||0)+(scrambleScores.find(s=>s.id===p.id)?.score||0)})).sort((a,b)=>b.score-a.score).map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:16,borderRadius:14,background:"#f8eafa"}}><strong>{i+1}. {p.name}</strong><strong>{p.score} pts</strong></div>)}</div><p>Minigame 3 is coming next!</p>{isHost ? <button className="button" onClick={handleReturnToLobby}>← Choose another minigame</button> : <p>Waiting for the host to return to Sakura School… ♡</p>}<Link to="/">Back to home</Link></div></section></main>
+    const combined = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      points: (scores.find(s => s.id === p.id)?.score || 0) +
+              (scrambleScores.find(s => s.id === p.id)?.score || 0)
+    }))
+
+    return (
+      <>
+        <Leaderboard
+          players={combined}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
+    )
   }
   if (room.status === "playing" && round >= 5 && round <= 9) {
     return <><SentenceScramble puzzle={scramblePuzzle} index={scrambleIndex} total={SCRAMBLE_PUZZLES.length} score={myScore+(scrambleScores.find(s=>s.id===uid)?.score||0)} players={players} myAnswer={scrambleMyAnswer} answerCount={scrambleAnswerCount} isHost={isHost} onSubmit={handleScrambleSubmit} onNext={handleScrambleNext} busy={scrambleBusy}/>{toast&&<div className="toast">{toast}</div>}</>
