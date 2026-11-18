@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './SentenceScramble.css'
+import RomajiText from "./RomajiText.jsx"
 
 export const SCRAMBLE_PUZZLES = [
   {id:'scramble-1',english:'I drink water.',words:['のみます','わたしは','みずを'],answer:['わたしは','みずを','のみます'],hint:'は marks the topic, を marks the object, and the verb comes last.'},
@@ -21,9 +22,9 @@ export default function SentenceScramble({puzzle,index,total,score,players,myAns
     <section className="scramble-card"><div className="scramble-kicker">💜 KUROMI'S SENTENCE SCRAMBLE</div><h1>Fix my sentence!</h1><p className="scramble-english">Translate: <strong>{puzzle.english}</strong></p>
     <div className="scramble-meter"><div style={{width:`${(index+1)/total*100}%`}}/></div>
     <div className="scramble-answer" aria-label="Your arranged sentence">{(finished?String(myAnswer).split('|'):selected).filter(Boolean).map((w,i)=><button key={`${w}-${i}`} disabled={finished||busy} onClick={()=>setSelected(s=>s.filter((_,j)=>i!==j))}>{w}{!finished?' ×':''}</button>)}{!finished&&!selected.length&&<span className="scramble-placeholder">Tap the tiles to build your sentence...</span>}</div>
-    <div className="scramble-bank">{!finished&&puzzle.words.filter(w=>!selected.includes(w)).map(w=><button key={w} disabled={busy} onClick={()=>setSelected(s=>[...s,w])}>{w}</button>)}</div>
+    <div className="scramble-bank">{!finished&&puzzle.words.filter(w=>!selected.includes(w)).map(w=><button key={w} disabled={busy} onClick={()=>setSelected(s=>[...s,w])}><RomajiText text={w}/></button>)}</div>
     {!finished&&<div className="scramble-controls"><button className="scramble-clear" disabled={!selected.length||busy} onClick={()=>setSelected([])}>Clear</button><button className="scramble-check" disabled={selected.length!==puzzle.words.length||busy} onClick={()=>onSubmit(selected.join('|'))}>{busy?'Submitting...':'Check answer →'}</button></div>}
-    {finished&&<div className={`scramble-feedback ${myAnswer===correct?'good':'retry'}`} role="status">{myAnswer===correct?'🌸 Correct! +100 points':<>Not quite! Correct order: <strong>{puzzle.answer.join(' ')}</strong></>}</div>}
+    {finished&&<div className={`scramble-feedback ${myAnswer===correct?'good':'retry'}`} role="status">{myAnswer===correct?'🌸 Correct! +100 points':<>Not quite! Correct order: <strong>{puzzle.answer.map((w,i)=><RomajiText key={i} text={w}/>)}</strong></>}</div>}
     <button className="scramble-hint" onClick={()=>setHint(s=>!s)}>{hint?'Hide grammar hint':'💡 Show grammar hint'}</button>{hint&&<p className="scramble-hint-text">{puzzle.hint}</p>}
     <p className="scramble-wait">{answerCount}/{players.length} players finished {finished&&!allAnswered?'· Waiting for classmates...':''}</p>
     {isHost&&index<total-1&&<button className="scramble-next" disabled={!allAnswered||busy} onClick={onNext}>Next puzzle →</button>}

@@ -7,6 +7,7 @@ import { prepareMinigame1 } from "../firebase/minigame1.js"
 import SentenceScramble, { SCRAMBLE_PUZZLES } from "./SentenceScramble.jsx"
 import ConversationCafe, { CAFE_SCENES } from "./ConversationCafe.jsx"
 import Leaderboard from "./Leaderboard.jsx"
+import RomajiText from "./RomajiText.jsx"
 import "../styles/sakuraSquare.css"
 import "../styles/nihongo-themes.css"
 import "../styles/nihongo-polish-v2.css"
@@ -508,7 +509,7 @@ export default function SakuraLobby() {
             <div style={{width: `${((round+1)/ordered.length)*100}%`, height: "100%", background: "#ef91b4", borderRadius: 20, transition: "width 250ms ease"}} />
           </div>
           <h1>{question.english}</h1><p>Choose the Japanese word that matches. Each correct answer earns 100 points!</p>
-          <div className="answer-grid">{question.options.map((a:string,i:number)=><button key={a} type="button" disabled={completed} aria-pressed={myAnswer === a} className={`answer-button ${myAnswer === a ? "is-selected" : ""} ${completed && a === correct ? "is-correct" : ""} ${completed && myAnswer === a && a !== correct ? "is-wrong" : ""}`} onClick={()=>handleAnswer(a)}><span>{String.fromCharCode(65+i)}</span>{a}{completed && a === correct ? " ✓" : completed && myAnswer === a && a !== correct ? " ✕" : ""}</button>)}</div>
+          <div className="answer-grid">{question.options.map((a:string,i:number)=><button key={a} type="button" disabled={completed} aria-pressed={myAnswer === a} className={`answer-button ${myAnswer === a ? "is-selected" : ""} ${completed && a === correct ? "is-correct" : ""} ${completed && myAnswer === a && a !== correct ? "is-wrong" : ""}`} onClick={()=>handleAnswer(a)}><span>{String.fromCharCode(65+i)}</span><RomajiText text={a}/>{completed && a === correct ? " ✓" : completed && myAnswer === a && a !== correct ? " ✕" : ""}</button>)}</div>
           <div className="minigame-footer">
             <div className="answer-status" role="status" aria-live="polite" style={{lineHeight: 1.6}}>
               {completed ? (myAnswer === correct ? "🌸 Correct! +100 points!" : `Not quite! The correct answer is ${correct}.`) : "Choose an answer to submit."}

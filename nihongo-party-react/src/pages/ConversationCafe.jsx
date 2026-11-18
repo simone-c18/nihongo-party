@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./ConversationCafe.css";
+import RomajiText from "./RomajiText.jsx";
 
 export const CAFE_SCENES = [
   { id:"cafe-1", speaker:"My Melody", japanese:"いらっしゃいませ！", translation:"Welcome!", prompt:"What should you say when greeting someone?", options:[{text:"こんにちは！",meaning:"Hello!",correct:true},{text:"おやすみなさい。",meaning:"Good night."},{text:"さようなら。",meaning:"Goodbye."}], reply:"こんにちは！ カフェへようこそ ♡" },
@@ -25,16 +26,16 @@ export default function ConversationCafe({ scene, index, total, score, players, 
       </div>
       <div className="cafe-dialogue" aria-live="polite">
         <div className="cafe-speaker">🎀 {scene.speaker}</div>
-        <div className="cafe-japanese">{finished&&selected?.correct?scene.reply:scene.japanese}</div>
+        <div className="cafe-japanese"><RomajiText text={finished&&selected?.correct?scene.reply:scene.japanese}/></div>
         <div className="cafe-translation">{finished&&selected?.correct?"My Melody is happy with your answer!":scene.translation}</div>
       </div>
     </section>
     <section className="cafe-panel">
       <div className="cafe-progress"><span style={{width:`${(index+1)/total*100}%`}} /></div>
       <h2>{scene.prompt}</h2>
-      <div className="cafe-choices">{scene.options.map((option,i)=><button key={option.text} disabled={finished||busy} className={`${picked===i||myAnswer===option.text?"chosen":""} ${finished&&option.correct?"right":""}`} onClick={()=>setPicked(i)}><span className="cafe-choice-letter">{String.fromCharCode(65+i)}</span><span><strong>{option.text}</strong>{finished && <small>{option.meaning}</small>}</span></button>)}</div>
+      <div className="cafe-choices">{scene.options.map((option,i)=><button key={option.text} disabled={finished||busy} className={`${picked===i||myAnswer===option.text?"chosen":""} ${finished&&option.correct?"right":""}`} onClick={()=>setPicked(i)}><span className="cafe-choice-letter">{String.fromCharCode(65+i)}</span><span><strong><RomajiText text={option.text}/></strong>{finished && <small>{option.meaning}</small>}</span></button>)}</div>
       {!finished&&<button className="cafe-submit" disabled={picked===null||busy} onClick={()=>onSubmit(scene.options[picked].text)}>{busy?"Sending...":"Say it! →"}</button>}
-      {finished&&<div className={`cafe-feedback ${selected?.correct?"yes":"no"}`} role="status">{selected?.correct?"🌸 Lovely! +100 points":<>Not quite. A better reply is <strong>{correct.text}</strong></>}</div>}
+      {finished&&<div className={`cafe-feedback ${selected?.correct?"yes":"no"}`} role="status">{selected?.correct?"🌸 Lovely! +100 points":<>Not quite. A better reply is <strong><RomajiText text={correct.text}/></strong></>}</div>}
       <p className="cafe-wait">{answerCount}/{players.length} players responded {finished&&!allAnswered?"· Waiting for classmates…":""}</p>
       {isHost&&index<total-1&&<button className="cafe-next" disabled={!allAnswered||busy} onClick={onNext}>Next café scene →</button>}
       {isHost&&index===total-1&&allAnswered&&<p className="cafe-wait">Everyone finished! Showing the leaderboard…</p>}
