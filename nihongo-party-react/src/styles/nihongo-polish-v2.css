@@ -1,0 +1,81 @@
+/* Nihongo Party v2: visual refinements only. Loaded after nihongo-themes.css. */
+/* Use an easy-to-read font for instructions, answers, and controls. */
+.minigame-shell, .scramble-page, .cafe-page {font-family: "Nunito", "Segoe UI", Arial, sans-serif;}
+.minigame-shell button, .scramble-page button, .cafe-page button {font-family:inherit;}
+.minigame-shell p, .minigame-shell .answer-status, .minigame-shell .question-number,
+.scramble-page p, .scramble-page button, .cafe-page p, .cafe-page button {line-height:1.5;}
+
+/* Cinnamoroll: calm sky-blue classroom, smaller question area and existing PNG. */
+.minigame-shell .minigame-stage {min-height:calc(100vh - 76px);padding:24px 18px 42px;background:linear-gradient(160deg,#edf8ff,#f8fcff 64%,#fffdf9);}
+.minigame-shell .minigame-stage::before,.minigame-shell .minigame-stage::after {opacity:.16;}
+.minigame-shell .question-card {width:min(820px,96vw);padding:32px 38px 28px;overflow:visible;}
+.minigame-shell .question-card::before {border-radius:24px 24px 0 0;}
+.minigame-shell .question-card::after {content:"";position:absolute;right:24px;top:43px;width:106px;height:106px;background:url('/assets/characters/cinnamoroll.png') center/contain no-repeat;pointer-events:none;}
+.minigame-shell .question-card .question-kicker,.minigame-shell .question-card .question-number {display:block;max-width:calc(100% - 125px);text-align:left;margin-left:0;}
+.minigame-shell .question-card h1 {font-family:Georgia,serif;font-size:clamp(38px,5vw,54px);letter-spacing:-.035em;margin:18px 0 4px;}
+.minigame-shell .question-card > p {font-size:15px;color:#597487;margin:4px auto 18px;max-width:580px;}
+.minigame-shell .question-card [role="progressbar"] {margin:14px 0 19px!important;background:#dceff8!important;}
+.minigame-shell .question-card [role="progressbar"] > div {background:#80c4e8!important;}
+.minigame-shell .answer-grid {gap:11px;}
+.minigame-shell .answer-button {min-height:76px;padding:14px 18px;font-size:clamp(19px,2.4vw,24px);}
+.minigame-shell .answer-status {font-size:14px;color:#486579;}
+.minigame-shell .round-actions button {background:#69add1;color:#fff;}
+.minigame-shell .minigame-footer {margin-top:14px;}
+
+/* Kuromi: tighter notebook, readable content, same PNG and interactions. */
+.scramble-page {padding-bottom:24px;}
+.scramble-top {padding:14px 0;}
+.scramble-layout {margin:16px auto;grid-template-columns:180px minmax(0,1fr);gap:20px;max-width:1000px;}
+.scramble-guide {padding-top:12px;}
+.scramble-guide img {max-height:154px;}
+.scramble-speech {padding:15px;font-size:14px;}
+.scramble-speech p {margin-top:6px;}
+.scramble-card {padding:24px 30px 22px;}
+.scramble-card h1 {font-size:clamp(27px,3.5vw,35px);margin:7px 0 9px;}
+.scramble-english {font-size:17px;margin:0;}
+.scramble-meter {margin:14px 0 18px;}
+.scramble-answer {min-height:80px;padding:12px;}
+.scramble-bank {min-height:60px;padding:16px 0;gap:9px;}
+.scramble-bank button,.scramble-answer button {padding:10px 14px;font-size:19px;}
+.scramble-controls {margin-top:3px;}
+.scramble-hint {margin-top:7px;}
+.scramble-wait {margin:8px 0;}
+.scramble-next {margin-top:8px;}
+
+/* My Melody: shorter café scene, readable question, compact choices. */
+.cafe-page {padding-bottom:24px;}
+.cafe-top {padding:12px 0;}
+.cafe-scene {min-height:240px;margin-top:10px;}
+.cafe-scene::before {top:40px;height:112px;width:124px;}
+.cafe-sign {top:12px;padding:7px 16px;font-size:15px;}
+.cafe-character {bottom:48px;left:7%;height:132px;width:135px;}
+.cafe-character img {max-height:132px;max-width:132px;}
+.cafe-dialogue {bottom:12px;left:25%;right:3%;padding:12px 16px;}
+.cafe-japanese {font-size:clamp(19px,2.6vw,24px);margin-top:3px;}
+.cafe-panel {padding:18px 26px 22px;}
+.cafe-panel h2 {color:#a95173;font-size:clamp(20px,2.7vw,25px);margin:15px 0 16px;}
+.cafe-choices {gap:8px;}
+.cafe-choices button {padding:10px 14px;min-height:57px;}
+.cafe-choices button strong {font-size:17px;color:#68435b;}
+.cafe-submit,.cafe-next {margin-top:12px;}
+.cafe-wait {margin-top:12px;}
+
+@media(max-width:700px) {
+ .minigame-shell .question-card {padding:24px 18px;}
+ .minigame-shell .question-card::after {right:12px;top:38px;width:68px;height:68px;}
+ .minigame-shell .question-card .question-kicker,.minigame-shell .question-card .question-number {max-width:calc(100% - 80px);}
+ .minigame-shell .answer-grid {grid-template-columns:1fr;}
+ .minigame-shell .answer-button {min-height:62px;}
+ .scramble-layout {grid-template-columns:1fr;gap:10px;}
+ .scramble-guide {display:flex;align-items:center;gap:12px;padding-top:0;}
+ .scramble-guide img {max-height:90px;max-width:88px;}
+ .scramble-speech {flex:1;}
+ .scramble-card {padding:20px 20px 18px;}
+ .cafe-scene {min-height:260px;}
+ .cafe-scene::before {top:40px;width:86px;height:95px;}
+ .cafe-character {left:3%;bottom:94px;width:92px;height:95px;}
+ .cafe-character img {max-width:92px;max-height:95px;}
+ .cafe-dialogue {left:4%;right:4%;bottom:10px;padding:10px 12px;}
+ .cafe-panel {padding:16px;}
+ .cafe-panel h2 {margin:12px 0;}
+}

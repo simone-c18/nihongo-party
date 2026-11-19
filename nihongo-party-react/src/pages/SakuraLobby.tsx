@@ -1,0 +1,656 @@
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Link, useParams } from "react-router-dom"
+import { auth } from "../firebase/firebase.js"
+import { getCurrentPlayer, listenToRoom, claimCharacter, setPlayerPosition, startGame, submitAnswer, advanceRound, selectMinigame, returnToGameMenu } from "../firebase/roomcode.js"
+import { getQuestions } from "../firebase/questions.js"
+import { prepareMinigame1 } from "../firebase/minigame1.js"
+import SentenceScramble, { SCRAMBLE_PUZZLES } from "./SentenceScramble.jsx"
+import ConversationCafe, { CAFE_SCENES } from "./ConversationCafe.jsx"
+import Leaderboard from "./Leaderboard.jsx"
+import RomajiText from "./RomajiText.jsx"
+import "../styles/sakuraSquare.css"
+import "../styles/nihongo-themes.css"
+import "../styles/nihongo-polish-v2.css"
+
+type IconName = "book" | "check" | "copy" | "gear" | "invite" | "leaf" | "lock" | "sound" | "users"
+
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  const paths: Record<IconName, React.ReactNode> = {
+    book: (
+      <>
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z" />
+        <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v15h4.5a2.5 2.5 0 0 1 2.5 2.5v-15Z" />
+      </>
+    ),
+    check: <path d="m5 12 4 4L19 6" />,
+    copy: (
+      <>
+        <rect x="8" y="8" width="11" height="11" rx="2" />
+        <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+      </>
+    ),
+    gear: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.95 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.95a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.95 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.05 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8.95 1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z" />
+      </>
+    ),
+    invite: (
+      <>
+        <path d="M15 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1" />
+        <circle cx="8.5" cy="7" r="4" />
+        <path d="M19 8v6M22 11h-6" />
+      </>
+    ),
+    leaf: (
+      <>
+        <path d="M20 4C12 4 5 8 5 15c0 2.8 2.2 5 5 5 7 0 10-8 10-16Z" />
+        <path d="M4 21c2-5 6-9 12-12" />
+      </>
+    ),
+    lock: (
+      <>
+        <rect x="5" y="10" width="14" height="11" rx="3" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </>
+    ),
+    sound: (
+      <>
+        <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+        <path d="M15 9.5a4 4 0 0 1 0 5M18 7a7.5 7.5 0 0 1 0 10" />
+      </>
+    ),
+    users: (
+      <>
+        <path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 20v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    ),
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="icon"
+      fill="none"
+      height={size}
+      viewBox="0 0 24 24"
+      width={size}
+    >
+      {paths[name]}
+    </svg>
+  )
+}
+
+type Player = {
+  id: string
+  name: string
+  characterId: CharacterId | null
+  role: string
+  host?: boolean
+  x: number
+  y: number
+}
+
+type CharacterId = "my-melody" | "kuromi" | "cinnamoroll" | "pochacco"
+
+type Character = {
+  id: CharacterId
+  name: string
+  image: string
+  color: string
+}
+
+const characters: Character[] = [
+  {
+    id: "my-melody",
+    name: "My Melody",
+    image: "/assets/figma-74-22/assets/fdfb3.png",
+    color: "#f7b8c8",
+  },
+  {
+    id: "kuromi",
+    name: "Kuromi",
+    image: "/assets/characters/kuromi.png",
+    color: "#8c8296",
+  },
+  {
+    id: "cinnamoroll",
+    name: "Cinnamoroll",
+    image: "/assets/characters/cinnamoroll.png",
+    color: "#9fd9ed",
+  },
+  {
+    id: "pochacco",
+    name: "Pochacco",
+    image: "/assets/figma-74-19/assets/8d8d6.png",
+    color: "#f2cf72",
+  },
+]
+
+function getCharacter(id: CharacterId) {
+  return characters.find((character) => character.id === id) || { id: "my-melody", name: "Choosing", image: "", color: "#dce8df" }
+}
+
+function Avatar({ player, large = false }: { player: Player; large?: boolean }) {
+  const character = player.characterId ? getCharacter(player.characterId) : { name: "Choosing", image: "", color: "#dce8df" }
+  return (
+    <div
+      className={`character-avatar ${large ? "character-avatar-large" : ""}`}
+    >
+      <span
+        className="character-glow"
+        style={{ backgroundColor: character.color }}
+      />
+      {character.image ? <img alt={character.name} src={character.image} /> : <span aria-label="Choosing a character">?</span>}
+    </div>
+  )
+}
+
+function Tree({ className }: { className: string }) {
+  return (
+    <div className={`tree ${className}`}>
+      <div className="tree-crown">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="tree-trunk" />
+      <div className="petals">
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
+    </div>
+  )
+}
+
+function Lamp({ className }: { className: string }) {
+  return (
+    <div className={`lamp ${className}`}>
+      <span className="lamp-top" />
+      <span className="lamp-light" />
+      <span className="lamp-post" />
+      <span className="lamp-base" />
+    </div>
+  )
+}
+
+function Plaza({ players, currentId }: { players: Player[]; currentId: string }) {
+  return (
+    <section className="plaza-card" aria-label="Sakura plaza waiting area">
+      <div className="plaza-sky">
+        <span className="cloud cloud-one" />
+        <span className="cloud cloud-two" />
+        <div className="school">
+          <span className="school-roof" />
+          <span className="school-clock">10:24</span>
+          <span className="school-window school-window-one" />
+          <span className="school-window school-window-two" />
+          <span className="school-door">
+            <i />
+            <i />
+          </span>
+          <span className="school-sign">NIHONGO PARTY ACADEMY</span>
+          <span className="school-foundation" />
+        </div>
+      </div>
+      <div className="plaza-ground">
+        <div className="sidewalk sidewalk-top" />
+        <div className="road">
+          <span className="road-line road-line-one" />
+          <span className="road-line road-line-two" />
+          <span className="road-line road-line-three" />
+          <span className="road-line road-line-four" />
+          </div>
+        <div className="sidewalk sidewalk-bottom" />
+        <div className="curb curb-top" />
+        <div className="curb curb-bottom" />
+        <div className="hedge hedge-left" />
+        <div className="hedge hedge-right" />
+        <div className="flower-bed flower-bed-left">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        <div className="flower-bed flower-bed-right">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        <Tree className="tree-left" />
+        <Tree className="tree-right" />
+        <Lamp className="lamp-left" />
+        <Lamp className="lamp-right" />
+        <div className="bench bench-left">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="bench bench-right">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="fountain">
+          <span className="fountain-bowl" />
+          <span className="fountain-water" />
+          <span className="fountain-base" />
+        </div>
+<div className="watering-can">
+          <span />
+        </div>
+        <div className="plaza-cat">
+          <span className="cat-tail" />
+          <span className="cat-body" />
+          <span className="cat-head">
+            <i />
+            <i />
+          </span>
+        </div>
+        <span className="butterfly butterfly-one">
+          <i />
+          <i />
+        </span>
+        <span className="butterfly butterfly-two">
+          <i />
+          <i />
+        </span>
+        {players.map((player) => (
+          <div
+            className={`scene-player ${
+              player.id === currentId ? "is-controlled" : ""
+            }`}
+            key={player.id}
+            style={{ left: `${player.x}%`, top: `${player.y}%` }}
+          >
+            <Avatar player={player} large />
+            <span className="scene-name">
+              {player.name}
+              {player.host && <i>HOST</i>}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="plaza-status">
+        <span className="key-hint">WASD</span>
+        or arrow keys to walk
+      </div>
+    </section>
+  )
+}
+
+function PlayerRow({ player, index }: { player: Player; index: number }) {
+  const character = player.characterId ? getCharacter(player.characterId) : { name: "Choosing", image: "", color: "#dce8df" }
+  return (
+    <div className="player-row" style={{ animationDelay: `${index * 80}ms` }}>
+      <Avatar player={player} />
+      <div className="player-info">
+        <div className="player-name">
+          {player.name}
+          {player.host && <span className="host-pill">HOST</span>}
+        </div>
+        <div
+          className={`player-state ${
+            player.role === "Ready" ? "is-ready" : ""
+          }`}
+        >
+          <Icon name="check" size={14} />
+          {character.name} · {player.role}
+        </div>
+      </div>
+      <span
+        className={`connection-dot ${
+          player.role === "Choosing a look" ? "is-busy" : ""
+        }`}
+      />
+    </div>
+  )
+}
+
+export default function SakuraLobby() {
+  const { code = "" } = useParams()
+  const [room, setRoom] = useState<any>(null)
+  const [uid, setUid] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [questions, setQuestions] = useState<any[]>([])
+  const [questionError, setQuestionError] = useState("")
+  const [copied, setCopied] = useState(false)
+  const [toast, setToast] = useState("")
+  const [scrambleBusy, setScrambleBusy] = useState(false)
+  const [selectedMinigame, setSelectedMinigame] = useState("vocab")
+  const [cafeBusy, setCafeBusy] = useState(false)
+  const [launching, setLaunching] = useState(false)
+  const lastMove = useRef(0)
+  const roomRef = useRef<any>(null)
+  roomRef.current = room
+  const isHost = Boolean(uid && room?.hostId === uid)
+  const claims: Record<string, string> = room?.characterClaims || {}
+  const players: Player[] = Object.entries(room?.players || {}).map(([id, p]: [string, any], i) => {
+    const characterId = (characters.find(c => claims[c.id] === id)?.id || null) as CharacterId | null
+    const pos = room?.positions?.[id] || { x: 28 + i * 15, y: 40 + (i % 2) * 18 }
+    return { id, name: p.nickname || "Player", characterId, role: characterId ? "Ready" : "Choosing a look", host: id === room?.hostId, x: pos.x, y: pos.y }
+  })
+  const myCharacter = players.find(p => p.id === uid)?.characterId
+  const round = room?.game?.currentIndex ?? 0
+  const scrambleIndex = round - 5
+  const scramblePuzzle = SCRAMBLE_PUZZLES[scrambleIndex]
+  const scrambleAnswers = room?.answers || {}
+  const scrambleMyAnswer = scramblePuzzle ? scrambleAnswers[uid]?.[scramblePuzzle.id] : undefined
+  const scrambleAnswerCount = scramblePuzzle ? players.filter(p => scrambleAnswers[p.id]?.[scramblePuzzle.id] !== undefined).length : 0
+  const scrambleAllAnswered = players.length > 0 && scrambleAnswerCount === players.length
+  const scrambleScores = players.map(p => ({...p, correctCount: SCRAMBLE_PUZZLES.filter(q => scrambleAnswers[p.id]?.[q.id] === q.answer.join("|")).length})).map(p => ({...p, score: p.correctCount * 100})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))
+  const cafeIndex = round - 10
+  const cafeScene = CAFE_SCENES[cafeIndex]
+  const cafeAnswers = room?.answers || {}
+  const cafeMyAnswer = cafeScene ? cafeAnswers[uid]?.[cafeScene.id] : undefined
+  const cafeAnswerCount = cafeScene ? players.filter(p => cafeAnswers[p.id]?.[cafeScene.id] !== undefined).length : 0
+  const cafeAllAnswered = players.length > 0 && cafeAnswerCount === players.length
+  const cafeScores = players.map(p => ({...p, correctCount: CAFE_SCENES.filter(s => cafeAnswers[p.id]?.[s.id] === s.options.find(o => o.correct)?.text).length})).map(p => ({...p, score:p.correctCount*100}))
+  const cafeFinished = room?.status === "playing" && round === 14 && cafeAllAnswered
+  const scrambleFinished = room?.status === "playing" && round === 9 && scrambleAllAnswered
+  const ordered = [...questions].sort((a,b) => a.id.localeCompare(b.id)).slice(0,5)
+  const question = ordered[round]
+  const answers = room?.answers || {}
+  const myAnswer = question ? answers[uid]?.[question.id] : undefined
+  const answerCount = question ? players.filter(p => answers[p.id]?.[question.id] !== undefined).length : 0
+  const allAnswered = players.length > 0 && answerCount === players.length
+  // Scores are derived from shared Firebase answers, so every player sees the same result.
+  // 100 points per correct answer; no extra database writes or rule changes required.
+  const scores = players.map(player => {
+    const correctCount = ordered.filter(q => answers[player.id]?.[q.id] === q.answer).length
+    return { ...player, correctCount, score: correctCount * 100 }
+  }).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+  const myScore = scores.find(player => player.id === uid)?.score ?? 0
+  const gameFinished = room?.status === "playing" &&
+    ordered.length === 5 && round === ordered.length - 1 && allAnswered
+
+  useEffect(() => {
+    if (!code) { setError("Missing room code"); setLoading(false); return }
+    let active = true
+    let unsubscribe = () => {}
+    getCurrentPlayer().then(user => {
+      if (!active) return
+      setUid(user.uid)
+      unsubscribe = listenToRoom(code, data => {
+        if (!active) return
+        setRoom(data)
+        setLoading(false)
+        setError(data ? "" : "Room not found")
+      }, err => { if (active) { setError(err.message); setLoading(false) } })
+    }).catch(err => { if (active) { setError(err.message); setLoading(false) } })
+    return () => { active = false; unsubscribe() }
+  }, [code])
+  useEffect(() => { getQuestions().then(prepareMinigame1).then(setQuestions).catch(e => setQuestionError(`Question bank: ${e.message}`)) }, [])
+  useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(""), 2600); return () => window.clearTimeout(timer) }, [toast])
+  const moveLocalPlayer = useCallback((dx: number, dy: number) => {
+    const current = roomRef.current
+    if (!current || current.status !== "lobby" || !auth.currentUser) return
+    const id = auth.currentUser.uid
+    const ids = Object.keys(current.players || {})
+    if (!ids.includes(id)) return
+    const old = current.positions?.[id] || { x: 28 + ids.indexOf(id)*15, y: 40 + (ids.indexOf(id)%2)*18 }
+    const x = Math.max(14, Math.min(82, old.x + dx))
+    const y = Math.max(29, Math.min(73, old.y + dy))
+    const now = Date.now()
+    if (now - lastMove.current < 75) return
+    lastMove.current = now
+    setPlayerPosition(code, x, y).catch(e => setToast(e.message))
+  }, [code])
+  useEffect(() => {
+    const handle = (event: KeyboardEvent) => {
+      if (roomRef.current?.status !== "lobby") return
+      const target = event.target as HTMLElement
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName)) return
+      const moves: Record<string,[number,number]> = { ArrowUp:[0,-3],w:[0,-3],W:[0,-3],ArrowDown:[0,3],s:[0,3],S:[0,3],ArrowLeft:[-3,0],a:[-3,0],A:[-3,0],ArrowRight:[3,0],d:[3,0],D:[3,0] }
+      if (!moves[event.key]) return
+      event.preventDefault()
+      moveLocalPlayer(...moves[event.key])
+    }
+    window.addEventListener("keydown",handle)
+    return () => window.removeEventListener("keydown",handle)
+  }, [moveLocalPlayer])
+  const copyCode = async () => { try { await navigator.clipboard.writeText(code) ; setCopied(true); setToast("Game code copied") } catch { setToast(`Room code: ${code}`) } }
+  const invite = async () => { const link = `${window.location.origin}/join`; try { await navigator.clipboard.writeText(`${link} — room code ${code}`); setToast("Join link and code copied") } catch { setToast(`Share code ${code}`) } }
+  const chooseCharacter = async (id: CharacterId) => { try { await claimCharacter(code,id); setToast(`${getCharacter(id).name} selected`) } catch(e:any) { setToast(e.message) } }
+  const handleStart = async () => {
+    if (launching) return
+    setLaunching(true)
+    try {
+      if (selectedMinigame === "vocab" && !questions.length) throw Error("Questions are still loading")
+      await selectMinigame(code, selectedMinigame)
+      await startGame(code)
+      setToast("Minigame started!")
+    } catch(e:any) { setToast(e.message) }
+    finally { setLaunching(false) }
+  }
+  const handleReturnToLobby = async () => {
+    try { await returnToGameMenu(code); setToast("Back to Sakura School! Choose another minigame.") }
+    catch(e:any) { setToast("Firebase permissions may need updating: " + e.message) }
+  }
+  const handleAnswer = async (answer: string) => { if (!question || myAnswer !== undefined) return; try { await submitAnswer(code,question.id,answer) } catch(e:any) { setToast(e.message) } }
+  const handleNext = async () => { try { if (!allAnswered) throw Error("Wait for all players to answer."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
+  const handleScrambleSubmit = async (value: string) => { if (!scramblePuzzle || scrambleMyAnswer !== undefined) return; setScrambleBusy(true); try { await submitAnswer(code, scramblePuzzle.id, value) } catch(e:any) { setToast(e.message) } finally { setScrambleBusy(false) } }
+  const handleScrambleNext = async () => { try { if (!scrambleAllAnswered) throw Error("Wait for everyone to finish."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
+  const handleCafeSubmit = async (value: string) => { if (!cafeScene || cafeMyAnswer !== undefined) return; setCafeBusy(true); try { await submitAnswer(code,cafeScene.id,value) } catch(e:any) { setToast(e.message) } finally { setCafeBusy(false) } }
+  const handleCafeNext = async () => { try { if (!cafeAllAnswered) throw Error("Wait for everyone to answer."); await advanceRound(code) } catch(e:any) { setToast(e.message) } }
+  if (loading) return <main className="app-shell integration-wait">Loading your Sakura Square room…</main>
+  if (error || !room) return <main className="app-shell integration-wait"><p className="integration-error">{error || "Room not found"}</p><Link to="/">Back home</Link></main>
+  if (!room.players?.[uid]) return <main className="app-shell integration-wait">You're not a member of this room. <Link to="/join">Join room</Link></main>
+  if (gameFinished) {
+    return (
+      <>
+        <Leaderboard
+          players={scores.map(p => ({ id: p.id, name: p.name, points: p.score }))}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
+    )
+  }
+  if (cafeFinished) {
+    return (
+      <>
+        <Leaderboard
+          players={cafeScores.map(p => ({ id: p.id, name: p.name, points: p.score }))}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
+    )
+  }
+  if (room.status === "playing" && round >= 10 && round <= 14) {
+    return <><ConversationCafe scene={cafeScene} index={cafeIndex} total={CAFE_SCENES.length} score={cafeScores.find(s=>s.id===uid)?.score||0} players={players} myAnswer={cafeMyAnswer} answerCount={cafeAnswerCount} isHost={isHost} onSubmit={handleCafeSubmit} onNext={handleCafeNext} busy={cafeBusy}/>{toast&&<div className="toast">{toast}</div>}</>
+  }
+  if (scrambleFinished) {
+    const combined = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      points: (scores.find(s => s.id === p.id)?.score || 0) +
+              (scrambleScores.find(s => s.id === p.id)?.score || 0)
+    }))
+
+    return (
+      <>
+        <Leaderboard
+          players={combined}
+          onContinue={isHost ? handleReturnToLobby : undefined}
+          isHost={isHost}
+        />
+        {!isHost && <p className="leaderboard-waiting">Waiting for the host to continue...</p>}
+      </>
+    )
+  }
+  if (room.status === "playing" && round >= 5 && round <= 9) {
+    return <><SentenceScramble puzzle={scramblePuzzle} index={scrambleIndex} total={SCRAMBLE_PUZZLES.length} score={myScore+(scrambleScores.find(s=>s.id===uid)?.score||0)} players={players} myAnswer={scrambleMyAnswer} answerCount={scrambleAnswerCount} isHost={isHost} onSubmit={handleScrambleSubmit} onNext={handleScrambleNext} busy={scrambleBusy}/>{toast&&<div className="toast">{toast}</div>}</>
+  }
+  if (room.status === "playing") {
+    if (!question) return <main className="app-shell integration-wait">Loading Minigame 1 questions… {questionError}</main>
+    const correct = question.answer
+    const completed = myAnswer !== undefined
+    return (
+      <main className="app-shell minigame-shell">
+        <header className="topbar"><div className="brand"><span className="brand-mark"><Icon name="leaf" size={23}/></span><span className="brand-name">Nihongo Party</span></div><div className="round-progress"><span>MINIGAME 1 · ENGLISH → JAPANESE</span><strong>{round+1} / {ordered.length}</strong></div><div className="score-chip">Your score: {myScore} pts · {players.length} players</div></header>
+        <section className="minigame-stage"><div className="sakura-confetti sakura-confetti-left"/><div className="sakura-confetti sakura-confetti-right"/><div className="question-card"><span className="question-kicker">TRANSLATE TO JAPANESE</span><div className="question-number">Question {round+1} of {ordered.length}</div>
+          <div role="progressbar" aria-label="Question progress" aria-valuemin={0} aria-valuemax={ordered.length} aria-valuenow={round+1} style={{height: 9, borderRadius: 20, background: "#f6dce6", overflow: "hidden", margin: "16px 0 24px"}}>
+            <div style={{width: `${((round+1)/ordered.length)*100}%`, height: "100%", background: "#ef91b4", borderRadius: 20, transition: "width 250ms ease"}} />
+          </div>
+          <h1>{question.english}</h1><p>Choose the Japanese word that matches. Each correct answer earns 100 points!</p>
+          <div className="answer-grid">{question.options.map((a:string,i:number)=><button key={a} type="button" disabled={completed} aria-pressed={myAnswer === a} className={`answer-button ${myAnswer === a ? "is-selected" : ""} ${completed && a === correct ? "is-correct" : ""} ${completed && myAnswer === a && a !== correct ? "is-wrong" : ""}`} onClick={()=>handleAnswer(a)}><span>{String.fromCharCode(65+i)}</span><RomajiText text={a}/>{completed && a === correct ? " ✓" : completed && myAnswer === a && a !== correct ? " ✕" : ""}</button>)}</div>
+          <div className="minigame-footer">
+            <div className="answer-status" role="status" aria-live="polite" style={{lineHeight: 1.6}}>
+              {completed ? (myAnswer === correct ? "🌸 Correct! +100 points!" : `Not quite! The correct answer is ${correct}.`) : "Choose an answer to submit."}
+              <div style={{fontSize: 14, marginTop: 8, opacity: 0.85}}>
+                {answerCount}/{players.length} players answered
+                {completed && !allAnswered ? " · Waiting for classmates…" : ""}
+                {allAnswered && round < ordered.length - 1 ? (isHost ? " · Everyone is ready! Click Next question." : " · Waiting for host to advance…") : ""}
+                {allAnswered && round === ordered.length - 1 ? " · Opening final leaderboard…" : ""}
+              </div>
+            </div>
+          </div>
+          {isHost && <div className="round-actions"><button disabled={!allAnswered || round >= ordered.length-1} onClick={handleNext}>Next question →</button>{round >= ordered.length-1 && <span>Waiting for everyone to finish… ♡</span>}</div>}
+        </div><div className="minigame-party">{players.map(p=><div key={p.id}><Avatar player={p}/><span>{p.name} · {scores.find(s => s.id === p.id)?.score ?? 0} pts</span></div>)}</div></section>
+        {toast && <div className="toast">{toast}</div>}
+      </main>
+    )
+  }
+  if (room.status !== "lobby") return <main className="app-shell integration-wait">Room state: {room.status}</main>
+  return (
+    <main className="app-shell">
+      <header className="topbar"><div className="brand"><span className="brand-name">Nihongo Party</span></div></header>
+
+      <div className="content">
+        <Link className="lobby-back" to="/">← Home</Link>
+        {(error || questionError) && <p className="integration-error" role="alert">{error || questionError}</p>}
+        <div className="lobby-heading">
+          <div>
+            <div className="eyebrow">
+              <span /> LIVE LOBBY
+            </div>
+            <h1>Meet Us In Nihongo Party Academy</h1>
+            <p>
+              Choose your character, walk around with WASD, and get ready for
+              today’s Japanese mission.
+            </p>
+          </div>
+          <div className="code-card">
+            <div>
+              <span className="code-label">GAME CODE</span>
+              <strong>{code}</strong>
+            </div>
+            <button className="copy-button" onClick={copyCode}>
+              <Icon name={copied ? "check" : "copy"} size={18} />
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        <div className="lobby-grid">
+          <Plaza players={players} currentId={uid} />
+
+          <aside className="roster-card">
+            <div className="roster-header">
+              <div>
+                <span className="panel-kicker">OUR CREW</span>
+                <h2>Players</h2>
+              </div>
+              <span className="player-count">
+                <Icon name="users" size={16} /> {players.length} / 4
+              </span>
+            </div>
+            <div className="players-list">
+              {players.map((player, index) => (
+                <PlayerRow key={player.id} player={player} index={index} />
+              ))}
+            </div>
+            <div className="character-select">
+              <div className="character-select-heading">
+                <span>CHOOSE YOUR CHARACTER</span>
+                <small>One per player</small>
+              </div>
+              <div className="character-options">
+                {characters.map((character) => {
+                  const claimedBy = players.find(
+                    (player) =>
+                      player.characterId === character.id &&
+                      player.id !== uid,
+                  )
+                  const isSelected = players.some(
+                    (player) =>
+                      player.id === uid &&
+                      player.characterId === character.id,
+                  )
+                  return (
+                    <button
+                      aria-label={`Select ${character.name}`}
+                      className={`character-option ${
+                        isSelected ? "is-selected" : ""
+                      } ${claimedBy ? "is-claimed" : ""}`}
+                      disabled={Boolean(claimedBy)}
+                      key={character.id}
+                      onClick={() => chooseCharacter(character.id)}
+                    >
+                      <img alt="" src={character.image} />
+                      <span>
+                        {isSelected
+                          ? "YOU"
+                          : claimedBy
+                            ? claimedBy.name
+                            : ""}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <button className="invite-button" onClick={invite}>
+              <Icon name="invite" size={19} />
+              Invite classmates
+            </button>
+            <div className="privacy-note">
+              <Icon name="lock" size={14} /> Only players with the code can join
+            </div>
+          </aside>
+        </div>
+
+        <footer className="lobby-footer">
+          <div className="tip">
+            <span className="tip-icon">
+              <Icon name="leaf" size={17} />
+            </span>
+            <span>
+              <strong>While you wait:</strong> Look for the hidden watering can
+              in the plaza.
+            </span>
+          </div>
+          {isHost ? <div style={{display:"grid",gap:12,minWidth:260}}>
+  <div style={{fontWeight:800,color:"#704d82"}}>🎮 Choose a Minigame</div>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#eaf6ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="vocab"} onChange={()=>setSelectedMinigame("vocab")}/> ☁️ Cinnamoroll's Vocab Quest</label>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#f5e9ff",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="scramble"} onChange={()=>setSelectedMinigame("scramble")}/> 💜 Kuromi's Sentence Scramble</label>
+  <label style={{display:"flex",gap:10,alignItems:"center",background:"#fff0f5",padding:12,borderRadius:12,cursor:"pointer"}}><input type="radio" name="minigame" checked={selectedMinigame==="cafe"} onChange={()=>setSelectedMinigame("cafe")}/> 🎀 My Melody's Conversation Café</label>
+  <button className="start-button is-host" disabled={launching || players.length < 2 || (selectedMinigame==="vocab" && !questions.length)} onClick={handleStart}>{launching ? "Starting…" : "Start selected minigame"}<span className="start-arrow">→</span></button>
+</div> : <span>Waiting for host to choose a minigame… ♡</span>}
+        </footer>
+      </div>
+
+      {toast && (
+        <div className="toast">
+          <Icon name="check" size={17} /> {toast}
+        </div>
+      )}
+    </main>
+  )
+}
